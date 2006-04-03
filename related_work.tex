@@ -1,0 +1,49 @@
+\section{Related Work}
+
+XXX:  This is pretty messy.  It's pretty much just random thoughts now.
+
+We will focus on overflow bugs.
+
+It is well known that C code tends to have security holes due to buffer
+overrun bugs and integer overflow bugs.  Many approaches have been applied
+to preventing, or at least detecting, these bugs.  While several have shown
+a substantial improvement, often with a minimal cost of efficiency, so far
+none of them have provided a solution that solves the problem in all cases.
+In fact, there is little hope that any solution can completely protect
+existing C code from the bugs it contains; ultimately, if the code has a
+bug, the best we can hope for (without modifying the language) is to limit
+the damage caused by it.  We would prefer to write code that is free of
+bugs in the first place, but experience has proven that it is simply
+infeasible to do this .
+
+The solution that Pit provides does come at a cost; however, the cost is
+optional and can be mitigated substantially with compiler optimizing
+techniques.
+
+, the tradeoff between security and efficiency still exists.  We find,
+however, that most of the time, this tradeoff is not as bad as it seems.  A
+tremendous amount of time is spent in a small fraction of a program's code.
+(XXX: find work to support this)  Therefore, we can easily reduce the
+speed of most of our code by a factor of, for example, five or ten with no
+noticeable impact, as long as the critical sections, that is sections where
+most of the time is spent, can still be written efficiently.  If we can
+easily guarantee that the code outside of the critical sections has no
+buffer overrun bugs or integer overflow bus, we can concentrate our efforts
+on making sure the critical sections are both secure and efficient.
+
+\begin{itemize}
+\item
+Perl.  Perl code never has buffer overflows (explain why).  Also code
+is easier to write because of managed arrays and hashes.
+\item
+Articles about buffer and integer overflow vulnerabilities
+\item
+Safe Systems Programming Languages (wpeii.pdf) is worth referencing
+here.  [[Safe Systems Programming Languages (wpeii.pdf) is
+interesting, and I'm reading it more closely.  It seems to relate
+really well.  I like their goals for a programming language for
+systems; this describes a good distinction between languages like C
+and Pit and higher ones like Java.  It also introduced me to some
+interesting ways of protecting existing C code and a couple languages
+I hadn't heard of yet.  Start reading again at 4.2.]]
+\end{itemize}

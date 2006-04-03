@@ -1,0 +1,82 @@
+\section{Body}
+
+\begin{itemize}
+\item
+	Overview
+\item
+	Autos
+\item
+	Security
+\item
+	Portability
+\item
+	C comparison
+\item
+	Perl comparison
+\item
+	Implementation:
+	\begin{itemize}
+	\item
+		Translation into assembler
+	\item
+		Compiler optimizations (substituting primitives for autos when possible)
+	\end{itemize}
+
+\item
+	Penalty reduction:
+	\begin{itemize}
+	\item
+		Convert auto to integer for loop counters.
+	\item
+		Sometimes alternative primitive code will not be substantially faster anyway.
+		For example, if the alternative code is complex and implements a hash with
+		reference counts to its elements, clearly it is better to use autos.  This
+		is a discussion that people have already written about in terms of Perl vs C,
+		so it will have many references.
+	\item
+		Copy-on-write.  Autos are not copied during assignment or when they are passed by-value to
+		functions.  Rather, an alias is created, and copying is delayed until the auto is modified.
+		Often the variable will never be modified.  In many cases, this may make autos faster than
+		primitive variable types.
+	\end{itemize}
+\end{itemize}
+
+
+C Comparison
+
+The following is a C program that adds pairs of numbers read from standard
+input.  Following it is the same program written in Pit.  Notice that in
+the second, autos manage all the array sizes and memory allocation for us,
+thus eliminating any potential for mismanaged string buffers.  As shown in
+the third example, they can be managed manually just as easily as in the C
+program, with the same risk to security.  This is the trade-off between
+improving efficiency and improving security and maintainability.
+
+\sourceinput{comparison.c}
+
+Figure 1.  The program in C.  While this example has no buffer
+overflow vulnerabilities, there are several ways they could be
+introduced.  For example, the wrong size could be passed to fgets(),
+an error could be introduced where the string is parsed with strsep(),
+or an error could be introduced in the format string passed to printf.
+Also notice that we had to set an arbitrary limit on the length of an
+input line.  While it is obviously possible to work around it, doing
+so makes the program much more complex and adds more opportunities for
+security holes.
+
+\sourceinput{comparison.p}
+
+Figure 2.  The same program, this time written in Pit using autos.
+Notice that neither the length of a string nor a pointer into the
+string are ever used.
+
+\sourceinput{comparison2.p}
+
+Figure 3.  The same program, this time written in Pit using some
+primitive variables.  While autos weren't completely eliminated here,
+but they could be.  In particular, \$in is implicitly converted to an
+auto when passed to \$string.split, and \$nums remains an auto.  Notice
+how easily primitives and autos can work together, allowing the
+programmer to choose more precisely what code to optimize for
+efficiency at the risk of security, and what code to optimize for
+maintainability at the cost of efficiency.

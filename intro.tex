@@ -1,0 +1,242 @@
+\section{Introduction}
+
+% What are we talking about?
+Pit is a general-purpose language designed to be an alternative to C.  It is
+similar to C, but with several additional features.  While the additional
+features are general-purpose, they prevent buffer and integer overflow
+vulnerabilities by automating memory allocation.  However if the cost to
+efficiency is too great, manual memory allocation is still possible.  The
+additional features also allow portability of object files after they are
+compiled.
+
+% Introduce autos
+The main feature added by Pit is the ability to \emph{optionally} have memory allocation automatically
+managed.  The choice as to whether to have the memory managed automatically is made for each variable.
+This is accomplished by declaring one new variable ``type'', called ``auto''.  (This ``type'' is
+actually a meta-type indicating that the variable is dynamically typed instead of statically typed.)
+``Auto'' indicates that the variable is dynamically typed; that is, the variable will assume
+the type of whatever value is assigned to it.  It also means that memory required to store its value
+will be managed automatically.  (Under the hood, an auto is stored on the stack or in the data
+segment as a pointer to a structure that stores the type, value, and reference count.  Most operations
+on it are translated into function calls to a supporting library.)  All the other variable types are
+referred to as ``primitive''.  Each of the primitive types corresponds to a variable type in C.
+
+% Tradeoffs and choices
+Clearly, using autos will often incur a performance penalty.  While there are many ways to reduce or
+sometimes eliminate this overhead, it cannot be ignored.  The advantage to this approach is
+that \emph{the programmer gets to choose} whether the benefit is worth the penalty, rather than being
+forced to write the entire module in a low-maintenance high-overhead language or in a high-maintenance
+low-overhead language.  In some parts of a module it is worth the penalty, and in some parts it is not.
+It is a well-established fact that nearly all of the execution time of a program is spent in a fraction
+of the code.  Reasonable estimates are usually something between 80\% and 90\% of the execution time is
+spent in 10\% to 20\% of the code, which we will call the \emph{time-critical sections} of code.
+This is why it is so important to let the programmer choose whether to use autos or primitive
+variables:  any code that does not use primitive variables is completely protected from buffer overrun
+and integer overflow vulnerabilities.  The code that has the largest impact on the execution time of
+the program can still use primitive variables and manual memory management.  Allowing the programmer to
+spend less time on 80\% of the code will allow him more time to meticulously audit the time-critical
+sections where he chose to use primitive variables for bug, security-related or otherwise.
+
+% Other options?
+Many other languages have demonstrated how automatic memory management is beneficial to security;
+however none of these are a viable replacement for C.  None allow the programmer to mix checked and
+unchecked code, and none allow access to inline assembly code, which is a requirement for any
+replacement for C.  In Pit, the same function may declare some variables that are managed
+automatically and some that are not.
+
+\subsection{Portability}
+
+A long-standing problem with C is after the source code is compiled, it is no longer portable.  It is
+locked into a particular version of a particular operating system on a particular CPU.  Because there
+are so many combinations, this task is usually left to the end-users, contributing to the difficulty of
+installation.  This is especially difficult for people who are not software developers.  This causes
+much difficulty; often this by itself is enough to convince a vendor to pick one or two platforms
+to release their software for, and the best hope for the rest is to use awkword compatibility layers, such as FreeBSD's
+compatibility layer for Linux software.  Many programs are not available for FreeBSD at all, except
+by using an executable compiled for Linux under this compatiblity layer.
+
+Application-level software written in Pit can be portable \emph{after} it is translated into object
+format (but before it is linked with the system libraries).  A program can be translated into object
+format once, and the object files can be distributed
+to all operating systems for a particular CPU.  During installation, the program is linked and
+copied into the appropriate place on the filesystem.  Clearly, here we are talking about portability
+between operating systems, not portability between CPUs.  This reduces the number of compilations
+necessary to one for each CPU.
+
+
+\subsubsection{detail -- move to body}
+
+XXX: Fix this paragraph.
+C's preprocessor is mostly to blame for this.  A library can declare macros that get resolved when
+the calling module is compiled.  A new version of this library may change the contents of these macros.
+A module written in Pit maintains the separation between the code in each module even after compilation...  mention stateless functions
+Blame also rests with C's clumsyness at representing integers with a dynamic size.
+
+
+Sometimes object-file portability has a cost to efficiency.  Sometimes an auto variable is required
+in the API to provide abstraction for the types of the values that are passed between functions.
+On the other hand, it is reasonable to rely on some values having exactly the same type on all operating systems.
+
+For example, the number of elements in an array is a number that is absolutely guaranteed to fit in
+a variable that is the size of a pointer.  Also, there is no benefit to using a variable that is
+smaller than a pointer (in fact, it is usually slower unless the compiler rounds the size up), at
+least when defining a module's API.  Therefore, when representing anything stored in memory, a
+pointer-sized integer is the only reasonable choice, and we need no abstraction.  It is reasonable
+to say that if an integer of larger size is required, the output bytecode must be different, which
+means it will be necessary to recompile the module anyway.
+
+On the other hand, consider an integer that represents an offset into a file.  A file's maximum
+size is dependent on the operating system.  In the not-so-distant past, file sizes were represented
+with a 32-bit variable, limiting them to 4GB.  At the time, it was wasteful to use larger values,
+as an ``industrial size'' array of hard drives occupying many large machine rooms could store only a
+fraction of 4GB.  Today, we use a 64-bit value for representing offsets into files, but it is
+unreasonable to rely on that being large enough forever, particularly with the proliferation of
+distributed storage systems such as RAID in the consumer market.  Clearly, locking a module's API into a
+64-bit size for a file offset is short-sighted at best.  Standard C libraries address this by using
+\emph{off\_t} to represent file offsets.  This allows the size to be increased without modifying the
+source code to a program.  However, this is still unsatisfactory, as it requires the program to be
+recompiled when a 128-bit integer is required.  In particular, during the transition period, the
+compilation generates different assembler code depending on whether the target operating system has
+switched to a 128-bit \emph{off\_t} or is still using a 64-bit \emph{off\_t}.  However, simply compiling
+two versions does not work either, because other data types are likely to be in transition as well, each
+of which doubles the number of compilationed versions required.  A better solution is to abstract the type of a
+file offset out of the compiled code entirely.  An auto can represent the integer without
+requiring a particular size; the amount of memory allocated will always be sufficient to represent the
+number.
+
+
+
+
+On a 32-bit architecture, a 32-bit
+value will always be sufficient to represent the number of elements in an array.  If the program is
+moved to a 64-bit architecture, the bytecode of the program will change, and therefore it must be
+recompiled.  (We ignore compatibility modes because a 32-bit program running on a 64-bit machine
+under a compatibility mode cannot have arrays larger than 4 GB.  Thus, there still cannot be more
+than $2^{32}$ elements.)  Therefore, we consider 64-bit extensions to a 32-bit architecture to be a
+distinct ar
+
+
+Complex APIs may require auto variables in order to communicate
+without being locked into an interface that cannot be extended.  For example, consider the C functions for
+making network sockets.  Making a network connection requires different parameters depending on whether it is
+using IPv4 or IPv6
+
+
+\subsection{Comparison to Other Languages}
+
+
+\begin{tabular}{ | l || c | c | c | }
+\hline
+\bf{Feature} & \bf{Pit} & \bf{C} & \bf{Perl} \\
+\hline
+
+\underline{Basic features} \\
+\hline
+Manual memory allocation & Y & Y & N \\
+\hline
+Automatic memory allocation and garbage collection & Y & N & Y \\
+\hline
+Structs & Y & Y & C \\
+\hline
+Inline assembly & Y & Y & N \\
+\hline
+
+\underline{High-level features} \\
+\hline
+Abstract data types & Y & N & Y \\
+\hline
+Automated compilation & Y & N & Y \\
+\hline
+Vector math & Y & N & N \\
+\hline
+\end{tabular}
+
+Yes, No, or Clumsy
+
+\subsubsection{Memory allocation}
+
+The programmer has a choice.  If he declares an auto, the memory for anything stored in it is allocated
+automatically, and reference-counting garbage collection is automatically performed.  If he declares a
+primitive type (integer, float, pointer, string, struct, etc), allocation works the same way as it works
+in C and no garbage collection is performed for that variable.  This emphasizes the choice given to the
+programmer; he is free to choose either efficiency or security, portability, and maintainability.
+
+\subsubsection{Structs}
+
+Consider, for example, a stream of bytes received over a network socket containing non-string data, such as
+integers or floats.  In C and Pit, it is easy to extract the elements from this by accessing the data with
+the \emph{struct} construct.  In Perl, this is possible but clumsy; to do so, the data must be passed to the
+\emph{unpack} function with a format string describing what the structure of the data is.
+
+\subsubsection{Inline assembly}
+
+Inline assembly code, while undesirable, is often unavoidable.  It is often necessary for low-level
+interaction with hardware or for manually optimizing code.  Pit's interface to assembly code is nearly
+identical to C's interface.
+
+\subsubsection{Automated compilation}
+
+When compiling a C program, the programmer must somehow describe each command required.  Each module of the
+program must be compiled explicitly.  Then the modules must be linked with the necessary libraries explicitly
+to produce the final executable file.  Additionally, for each module and library, a separate interface
+description (``header file'' in C-specific terminology) must be maintained.  While tools such as \emph{make}
+ease this process, it is still a complex process that the programmer must design carefully.
+
+When compiling a Perl program, compilation starts with the main module.  When another module or library is
+required, the compiler is told the name of the library so it can find it in the filesystem.  Not only does
+this ease the compilation process, but it makes it easier to move the process to other systems where the
+filesystem's hierarchy is different because the \emph{compiler} rather than files shipped with the source
+code decides where to find dependencies.
+
+As with Perl, each symbol in a Pit program belongs to a ``namespace''.  Namespaces may be nested within a
+module, and each module implicitly defines a namespace defined by the filename of the module and the
+subdirectory (if any) under which it resides in the main library directory.  Obviously
+namespaces provide a separation between symbol names, preventing two or more modules from accidentally
+defining conflicting symbol names, but this scheme also allows the linker to automatically find dependencies.
+For example, if the main module imports a library called ``helper'', the compiler finds the interface file for
+this library called ``helper.pi'' and reads the exported symbol prototypes from it.  All of the symbol
+names in that library are prefixed with the word ``helper'' and a period.  Because of the prefix, when
+the module is linked, the linker automatically looks for a file called ``helper.o'', ``helper.a'', etc
+in the current directory and in the library search path.
+
+While other steps may be necessary to compile or install the program, the basic compilation process is
+automated.  Also, interface files are generated automatically instead of maintained manually.  These are
+clear advantages over C.
+
+\subsubsection{Abstract data types}
+
+XXX: more work
+
+\subsubsection{Vector math}
+
+XXX: more work
+
+
+
+\subsection{XXX: Junk to do}
+
+\begin{itemize}
+\item
+	Target applications:
+	\begin{itemize}
+	\item
+		Operating systems (kernel, libraries, CLI, GUI, etc).  No run-time
+		interpreter is required.  Efficiency costs are optional.
+		Easy interaction with in-line and external assembler code.  Easy
+		interaction with existing C code.
+	\item
+		Threaded applications.  All features are (or will be) thread-safe.
+	\item
+		Network applications.  Additional features make string handling
+		easier.
+	\item
+		Real-time systems.  Libraries and extra features are designed to
+		require predictable and consistent usage of CPU and memory.
+	\item
+		Application software (web-based and local).  Autos improve data
+		manageability in ways similar to Perl and related languages via
+		easy allocation, garbage collection, hashes, managed arrays.
+	\end{itemize}
+\item
+	Implementation
+\end{itemize}

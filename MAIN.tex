@@ -1,0 +1,23 @@
+\documentclass{article}
+
+\usepackage{moreverb}
+\usepackage{url}
+
+\def\sourcetabsize{4}
+\newenvironment{sourcestyle}{\begin{scriptsize}}{\end{scriptsize}}
+\def\sourceinput#1{\par\begin{sourcestyle}\verbatimtabinput[\sourcetabsize]{#1}\end{sourcestyle}\par}
+
+\begin{document}
+
+\input{title}
+\input{intro}
+\input{related_work}
+\input{body}
+\input{conclusion}
+
+\clearpage
+\bibliographystyle{plain}
+\bibliography{MAIN}  % name of bibliography file
+\clearpage
+
+\end{document}
