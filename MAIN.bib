@@ -1,27 +1,114 @@
-@book{lamport1994,
-	author = "Leslie Lamport",
-	title = "LaTeX: A Document Preparation System",
-	edition = "Second",
-	year = "1994",
-	publisher = "Addison-Wesley",
-	address = "Reading, Massachusetts",
+@comment{
+	x_* are fields I added.
+
+	x_acm_id records the citation ID assigned by ACM.  I don't like theirs since
+	they're just serial numbers, but it may be useful to keep them handy in case
+	I need them later.
+
+	x_interest explains why I thought this article was interesting in the first
+	place.
+
+	x_cited_by describes the citation tree.
+
+	x_quality is how good I think it is:  worst, bad, fair, good, best
 }
 
-@article{greenwade93,
-	author = "George D. Greenwade",
-	title = "The {C}omprehensive {T}ex {A}rchive {N}etwork ({CTAN})",
-	year = "1993",
-	journal = "TUGBoat",
-	volume = "14",
-	number = "3",
-	pages = "342--351",
+@misc{openbsd-security,
+	x_interest = {buffer overrun},
+	x_quality = {best},
+	author = {OpenBSD},
+	title = {OpenBSD Security},
+	howpublished = {\url{http://openbsd.org/security.html}},
 }
 
-@misc{eubonicode,
-	author = "Chad Brewbaker and Brian Bosse and Matt Poush",
-	title = "Eubonicode",
-	year = "2000",
-	howpublished = "\url{http://www.public.iastate.edu/~crb002/prog.html}",
-	note = "last visited 2006-03-27",
+@inproceedings{zhivich2005,
+	x_interest = {buffer overrun},
+	x_quality = {high},
+	author = {Michael Zhivich and Tim Leek and Richard Lippmann},
+	title = {Dynamic Buffer Overflow Detection},
+	booktitle = {Workshop on the Evaluation of Software Defect Detection Tools 2005},
+	year = {2005},
+	location = {Chicago, IL},
+	url = {http://www.cs.umd.edu/~pugh/BugWorkshop05/papers/61-zhivich.pdf},
 }
 
+@inproceedings{xu2002,
+	x_interest = {buffer overrun},
+	x_quality = {?},
+	author = {Jun Xu and Zbigniew Kalbarczyk and Sanjay Patel and Ravishankar K. Iyer},
+	title = {Architecture Support for Defending Against Buffer Overflow Attacks},
+	booktitle = {Workshop on Evaluating and Architecting System Dependability (EASY)},
+	year = {2002},
+	month = {October},
+	location = {San Jose, California},
+	url = {http://www.crhc.uiuc.edu/EASY/Papers02/EASY02-xu.pdf},
+}
+
+@article{plum2005,
+	x_interest = {buffer overrun},
+	x_quality = {?},
+	author = {Thomas Plum and David M. Keaton},
+	title = {Eliminating Buffer Overflows, Using the Compiler or a Standalone Tool},
+	year = {2005},
+	url = {http://www.plumhall.com/ASE-SSATTM-plum+keaton-proceedings.pdf},
+}
+
+@inproceedings{cowan2003,
+	x_interest = {buffer overrun},
+	x_quality = {?},
+	author = {Crispin Cowan and Steve Beattie and John Johansen and Perry Wagle},
+	title = {{PointGuard$^{\textrm{TM}}$}: {Protecting} Pointers from Buffer Overflow Vulnerabilities},
+	booktitle = {Proc. of the 12th {Usenix} Security Symposium},
+	year = {2003},
+	month = {August},
+	url = {http://www.usenix.org/events/sec03/tech/full_papers/cowan/cowan.pdf},
+}
+
+@inproceedings{cowan2000,
+	x_interest = {buffer overrun},
+	x_quality = {?},
+	author = {Crispin Cowan and Perry Wagle and Calton Pu and Steve Beattie and Jonathan Walpole},
+	title = {Buffer overflows: {Attacks} and defenses for the vulnerability of the decade},
+	booktitle = {{DARPA} Information Survivability Conference \& Exposition -- Volume 2},
+	year = {2000},
+	month = {January},
+	pages = {119--129},
+	url = {http://ieeexplore.ieee.org/iel5/6658/17794/00821514.pdf?isNumber=17794=IEEE%20CNF&arnumber=821514&arSt=119&ared=129+vol.2&arAuthor=Cowan%2C+C.%3B+Wagle%2C+F.%3B+Calton+Pu%3B+Beattie%2C+S.%3B+Walpole%2C+J.%3B},
+}
+
+@article{li2004,
+	x_interest = {buffer overrun},
+	x_quality = {?},
+	author = {Peng Li},
+	title = {Safe Systems Programming Languages},
+	year = {2004},
+	month = {October},
+	url = {http://www.cis.upenn.edu/~lipeng/papers/wpeii.pdf},
+}
+
+@article{byrd2004,
+	x_interest = {buffer overrun},
+	x_quality = {?},
+	author = {William E. Byrd},
+	title = {Stack Smashing Defense: A Buffer Overflow Lab Exercise},
+	year = {2004},
+	month = {February},
+	url = {http://cisa.umbc.edu/CDX/Will/stack_smash_proposal.pdf},
+}
+
+@article{kuperman2005,
+	x_interest = {buffer overrun},
+	x_quality = {?},
+	x_acm_id = {1096004},
+	author = {Benjamin A. Kuperman and Carla E. Brodley and Hilmi Ozdoganoglu and T. N. Vijaykumar and Ankit Jalote},
+	title = {Detection and prevention of stack buffer overflow attacks},
+	journal = {Commun. ACM},
+	volume = {48},
+	number = {11},
+	year = {2005},
+	issn = {0001-0782},
+	pages = {50--56},
+	doi = {http://doi.acm.org/10.1145/1096000.1096004},
+	publisher = {ACM Press},
+	address = {New York, NY, USA},
+}
