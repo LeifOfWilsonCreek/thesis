@@ -165,7 +165,6 @@ the connection can be encapsulated into an extensible and portable format.
 
 \subsection{Comparison to Other Languages}
 
-
 \begin{tabular}{ | l || c | c | c | }
 \hline
 \bf{Feature}						& \bf{Pit} & \bf{C} & \bf{Perl} \\
@@ -177,11 +176,24 @@ Manual memory allocation				& Y & Y & N \\
 \hline
 Automatic memory allocation and garbage collection	& Y & N & Y \\
 \hline
-Structs							& Y & Y & C \\
+Automatic module interfaces				& Y & N & Y \\
+\hline
+Namespaces						& Y & N & Y \\
+\hline
+
+\underline{Language constructs} \\
+\hline
+Homogeneous arrays (strings)				& Y & Y & C \\
+\hline
+Heterogeneous arrays					& Y & N & Y \\
+\hline
+Structs							& Y & Y & N \\
+\hline
+Hashes							& Y & N & Y \\
 \hline
 Inline assembly						& Y & Y & N \\
 \hline
-Exceptions						& Y & N & C \\
+Exceptions						& Y & C & C \\
 \hline
 
 \underline{High-level features} \\
@@ -192,34 +204,91 @@ Automated compilation					& Y & N & Y \\
 \hline
 Vector math						& Y & N & N \\
 \hline
+Eval							& N & N & Y \\
+\hline
 \end{tabular}
 
-Yes, No, or Clumsy
+Yes, No, Clumsy, Not Applicable
 
-\subsubsection{Memory allocation}
+\subsubsection{Manual and automatic memory allocation}
 
-The programmer has a choice.  If he declares an auto, the memory for anything stored in it is allocated
-automatically, and reference-counting garbage collection is automatically performed.  If he declares a
-primitive type (integer, float, pointer, string, struct, etc), allocation works the same way as it works
-in C and no garbage collection is performed for that variable.  This emphasizes the choice given to the
-programmer; he is free to choose either efficiency or security, portability, and maintainability.
+In Pit, the programmer chooses which variables are allocated automatically.  If he declares a variable to be the auto
+type, the memory for it and anything stored in it is allocated automatically, and reference-counting garbage collection
+is performed automatically.  If he declares a variable to be a primitive type, he must manually allocate and free
+memory the same way he would in C.
 
-\subsubsection{Structs}
+\subsubsection{Automatic module interfaces}
 
-Consider, for example, a stream of bytes received over a network socket containing non-string data, such as
-integers or floats.  In C and Pit, it is easy to extract the elements from this by accessing the data with
-the \emph{struct} construct.  In Perl, this is possible but clumsy; to do so, the data must be passed to the
-\emph{unpack} function with a format string describing what the structure of the data is.
+In C, the programmer must meticulously create a header file for every module.  Typically, almost all the information in
+the header file is duplicated in the module's source file.  All of this duplicated information could be generated
+automatically (some languages, such as Ada, do this), and therefore almost all of the time programmers spend maintaining
+header files for C modules is wasted.
+
+Perl has an unusual approach.  When a module is imported, it is literally executed.  However, the net effect is that
+it supports modules in a conventional sense, but does not require separate interface files.
+
+Pit takes an approach similar to Ada; when a module is compiled, the compiler generates both the object file containing
+machine code and an interface file for the module.  The contents of the interface file function the same way as a C
+header file, except that it is generated automatically; that is, it contains only the prototypes for functions and
+shared variables, and when one module imports another module's interface file, it is included as if it were part of the
+importer's original source code.  While this could be accomplished with a preprocessor, the compiler instead supports
+this directly because it is the only necessary feature that preprocessors provide.  This means most Pit code does not
+require a preprocessor.  Often a preprocessor provides other useful functionality, and Pit does not exclude the use
+of a preprocessor; rather it simply allows the language to be useful without a preprocessor.  Any text processor such
+as M4 or C's preprocessor can be used for this purpose.
+
+\subsubsection{Namespaces}
+
+C simply does not support namespaces.  Perl supports namespaces in the form of ``packages'', but they are implemented
+in an ususual way.  Pits support namespaces well, including support for declaring ``private'' symbols that are only
+visible inside the namespace and ``public'' symbols that are visible everywhere.  Symbol names must be prefixed with
+the name of their namespace except when they are referred to within their own namespace.  Pit implicitly declares a
+namespace for each module with the name of the file it is contained in.  This allows the linker to find module
+dependencies without explicitly naming which modules should be linked in.  Many other languages support similar
+functionality.
+
+\subsubsection{Homogeneous arrays (strings)}
+
+C supports homogeneous arrays of any type, including ``char'', which is used to build strings of text.  Perl supports a
+text strings, but no other homogeneous array type.  Individual characters cannot be extracted from Perl strings except
+through disproportionally expensive operations (in terms of both programmer and CPU time).  In Pit, a ``string'' is any
+homogeneous array.  To differentiate between homogeneous and heterogeneous arrays, the former is a string and the
+latter is an array.  Text is a string of integers; strings of floats, structs, or strings may also be declared.  A Pit
+string is equivalent to an array in C parlance.
+
+\subsubsection{Heterogeneous arrays}
+
+In Perl parlance, arrays are heterogeneous.  Except for indivisible sequences of 8-bit characters, there is no support
+for homogeneous arrays.  C does not support heterogeneous arrays.  In Pit, autos can store heterogeneous arrays or
+strings of integers (but not strings of other types).
+
+\subsubsection{Structs and Hashes}
+
+Structs are, of course, borrowed from C.  A struct is exactly the same thing in C and Pit.  Perl has no support for
+proper structs, but a struct can be approximated with a hash.  The reason for this is structs and hashes represent
+nearly the same thing:  A set of names mapped to a set of values.  The primary difference is that the elements of a
+struct are static, while elements of a hash can be added or deleted at runtime.  In Pit, autos cannot store structs;
+instead, a struct can be approximated with a hash.  Primitive variables can be declared with the struct type.
 
 \subsubsection{Inline assembly}
 
-Inline assembly code, while undesirable, is often unavoidable.  It is often necessary for low-level
-interaction with hardware or for manually optimizing code.  Pit's interface to assembly code is nearly
-identical to C's interface.
+In low-level programming, it is often unavoidable to use inline assembly code, however undesirable it may be, for
+interaction with hardware, manually optimizing code, switching tasks or managing memory paging in an operatin system,
+etc.  Pit's interface to assembly code is nearly identical to GCC's interface.
 
 \subsubsection{Exceptions}
 
-XXX: More work -- perl's clumsy because there's no machine-readable form for the error messages
+Fundamentally, an ``exception'' is a branch that can exit several functions simultaneously, usually used for error
+handling; in most languages, exceptions have additional features that significantly improve their usability, but this
+is the basic meaning.  The best that C has to offer are the functions setjmp and longjmp.  These are quite clumsy, as
+they have no mechanism for allowing intermediate functions to clean up if an exception occurs.
+
+Perl supports exceptions also, but its support is clumsy in a different way; error messages in Perl are always in the
+form of user-friendly strings, for example, "No such file or directory".  This means that the only way for a program to
+trap a particular error is to match the user-friendly string.  If the string changes, for example because the user
+speaks a different language or uses a different operating system, the trap for that particular error breaks.  Good
+support must provide a way to report a dependable identifier for an error, a way to map that identifier to a
+user-friendly message, and a way for intermediate functions to clean up their workspace when an exception occurs.
 
 \subsubsection{Abstract data types}
 
@@ -257,6 +326,12 @@ clear advantages over C.
 \subsubsection{Vector math}
 
 XXX: more work
+
+\subsubsection{Eval}
+
+XXX: more work
+
+
 
 
 
