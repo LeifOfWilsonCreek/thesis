@@ -27,7 +27,7 @@ call to a supporting library.  The language is self-hosting, in the sense that e
 supporting libraries for the language will be written in the language with no tools written in other languages.  This
 is possible because primitives can be used to construct the infrastructure required by autos.
 
-XXX: This might be a good place to mention dynamic languages and reflective languages.
+% XXX: This might be a good place to mention dynamic languages and reflective languages.  This should also be in Related Work.
 
 Pit is targeted at making low-level code more secure, portable, and maintainable.  It includes support for in-line
 assembly code to facilitate system programming, and it is well-suited for anything C is well-suited for, including
@@ -36,22 +36,20 @@ kernels, system libraries, supporting software, network daemons, etc.
 
 \subsection{Security}
 
-XXX: Add citations below for security papers from Reza -- lots of those papers directly relate.  Also cite http://openbsd.org/security.html
-
 Even today, after so much study and work, cutting edge operating systems still have a dismal outlook on security.  Even
 if all the bugs are fixed in existing code, new ones are constantly introduced with new code.  For example, nobody
 reasonably expects the existing operating systems to ever be free of buffer overrun bugs until there are new
 innovations.  Until then, we must settle for staying one step ahead of attackers.  Operating system code is undoubtedly
 the most widely used code, since every computer needs it.  This makes it the most targeted code for malicious
 attackers, and yet, it is also probably the most widely audited code as well, and to date, nobody has produced a modern
-operating system that is free of security problems.  OpenBSD is probably the operating system with the most proactively
+operating system that is free of security problems.  OpenBSD is probably the operating system with the most proactive
 approach to security, and after many years it is still unusual for them to go even a few months without finding another
-buffer overflow bug.  Many good ideas have been developed to improve security for low-level code, and yet all have
+buffer overflow bug\cite{openbsd-security}.  Many good ideas have been developed to improve security for low-level code, and yet all have
 fallen short of complete success, where a successful approach must achieve a high level of confidence that the code has
 no buffer overrun bugs, no integer overflow bugs, and do so without an unacceptable loss of efficiency.  In general,
 when we talk about security in this paper, our scope is limited to buffer overrun and integer overflow bugs because
 they are the bugs that a programming language can help prevent, and this class of bugs covers the overwhelming majority
-of security holes.
+of security holes\cite{xu2002}.
 
 C is the language of choice for operating system code for good reasons.  Operating systems absolutely need easy access
 to in-line assembly code for hardware IO.  Also, they need to be able to write efficient code, as speed is a major
