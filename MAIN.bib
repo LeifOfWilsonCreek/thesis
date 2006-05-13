@@ -13,10 +13,10 @@
 	x_quality is how good I think it is:  worst, bad, fair, good, best
 }
 
-@misc{alephone1997,
+@unpublished{alephone1997,
 	x_interest = {buffer overrun},
 	x_quality = {best},
-	author = {Aleph One},
+	author = {{Aleph One}},
 	title = {Smashing The Stack For Fun And Profit},
 	url = {http://www.insecure.org/stf/smashstack.txt},
 }
@@ -24,8 +24,8 @@
 @misc{openbsd-security,
 	x_interest = {buffer overrun},
 	x_quality = {best},
-	author = {OpenBSD},
-	title = {OpenBSD Security},
+	author = {Open{BSD}},
+	title = {Open{BSD} Security},
 	url = {http://openbsd.org/security.html},
 }
 
@@ -47,7 +47,7 @@
 	title = {Architecture Support for Defending Against Buffer Overflow Attacks},
 	booktitle = {Workshop on Evaluating and Architecting System Dependability (EASY)},
 	year = {2002},
-	month = {October},
+	month = {october},
 	location = {San Jose, California},
 	url = {http://www.crhc.uiuc.edu/EASY/Papers02/EASY02-xu.pdf},
 }
@@ -68,7 +68,7 @@
 	title = {{PointGuard$^{\textrm{TM}}$}: {Protecting} Pointers from Buffer Overflow Vulnerabilities},
 	booktitle = {Proc. of the 12th {Usenix} Security Symposium},
 	year = {2003},
-	month = {August},
+	month = {august},
 	url = {http://www.usenix.org/events/sec03/tech/full_papers/cowan/cowan.pdf},
 }
 
@@ -79,7 +79,7 @@
 	title = {Buffer overflows: {Attacks} and defenses for the vulnerability of the decade},
 	booktitle = {{DARPA} Information Survivability Conference \& Exposition -- Volume 2},
 	year = {2000},
-	month = {January},
+	month = {january},
 	pages = {119--129},
 	url = {http://ieeexplore.ieee.org/iel5/6658/17794/00821514.pdf?isNumber=17794=IEEE%20CNF&arnumber=821514&arSt=119&ared=129+vol.2&arAuthor=Cowan%2C+C.%3B+Wagle%2C+F.%3B+Calton+Pu%3B+Beattie%2C+S.%3B+Walpole%2C+J.%3B},
 }
@@ -90,7 +90,7 @@
 	author = {Peng Li},
 	title = {Safe Systems Programming Languages},
 	year = {2004},
-	month = {October},
+	month = {october},
 	url = {http://www.cis.upenn.edu/~lipeng/papers/wpeii.pdf},
 }
 
@@ -100,7 +100,7 @@
 	author = {William E. Byrd},
 	title = {Stack Smashing Defense: A Buffer Overflow Lab Exercise},
 	year = {2004},
-	month = {February},
+	month = {february},
 	url = {http://cisa.umbc.edu/CDX/Will/stack_smash_proposal.pdf},
 }
 
@@ -127,4 +127,92 @@
 	author = {Eric Haugh and Matt Bishop},
 	title = {Testing C Programs for Buffer Overflow Vulnerabilities},
 	year = {2003},
+}
+
+@article{xu2003,
+	x_interest = {buffer overrun},
+	x_quality = {good},
+	author = {Jun Xu and Zbigniew Kalbarczyk and Ravishankar K. Iyer},
+	title = {Transparent Runtime Randomization for Security},
+	journal = {srds},
+	volume = {00},
+	year = {2003},
+	issn = {1060-9857},
+	pages = {260},
+	doi = {http://doi.ieeecomputersociety.org/10.1109/RELDIS.2003.1238076},
+	publisher = {IEEE Computer Society},
+	address = {Los Alamitos, CA, USA},
+}
+
+@inproceedings{bhatkar2003,
+	x_interest = {buffer overrun},
+	x_quality = {good},
+	author = {Sandeep Bhatkar and Daniel C. DuVarney and R. Sekar},
+	title = {Address Obfuscation: An Efficient Approach to Combat a Broad Range of Memory Error Exploits},
+	booktitle = {Proc. of the 12th {Usenix} Security Symposium},
+	year = {2003},
+	month = {august},
+	location = {Washington, DC},
+	url = {http://www.usenix.org/events/sec03/tech/full_papers/cowan/cowan.pdf},
+}
+
+@misc{ozdog2003,
+	x_interest = {buffer overrun},
+	x_quality = {good},
+	author = {H. D {\"{O}}zdo{\~{g}}ano{\~{g}}lu and T. N. Vijaykumar and C. E. Brodley and A. Jalote and B. A. Kuperman},
+	title = {SmashGuard: A Hardware Solution to Prevent Security Attacks on the Function Return Address},
+	year = {2003},
+	month = {november},
+}
+
+@inproceedings{chen2005,
+	x_interest = {NCD attacks},
+	x_quality = {good},
+	author = {Shuo Chen and Jun Xu and Emre C. Sezer and Prachi Gauriar and Ravishankar K. Iyer},
+	title = {Non-Control-Data Attacks Are Realistic Threats},
+	booktitle = {Proc. of the 14th {Usenix} Security Symposium},
+	pages = {177-192},
+	year = {2005},
+}
+
+@article{ahmad2003,
+	x_interest = {integer overflows},
+	x_quality = {best},
+	author = {Dave Ahmad},
+	title = {The Rising Threat of Vulnerabilities Due to Integer Errors},
+	journal = {IEEE Security and Privacy},
+	volume = {01},
+	number = {4},
+	year = {2003},
+	issn = {1540-7993},
+	pages = {77-82},
+	doi = {http://doi.ieeecomputersociety.org/10.1109/MSECP.2003.1219077},
+	publisher = {IEEE Computer Society},
+	address = {Los Alamitos, CA, USA},
+}
+
+@inproceedings{cowan1998,
+	author = {Crispan Cowan and Calton Pu and Dave Maier and Jonathan Walpole and Peat Bakke and Steve Beattie and Aaron Grier and Perry Wagle and Qian Zhang and Heather Hinton},
+	title = {{StackGuard}: Automatic Adaptive Detection and Prevention of Buffer-Overflow Attacks},
+	booktitle = {Proc. 7th USENIX Security Conference},
+	pages = {63--78},
+	year = {1998},
+	month = {january},
+	location = {San Antonio, Texas},
+}
+
+@unpublished{solardesigner,
+	x_interest = {buffer overrun},
+	x_quality = {best},
+	author = {{Solar Designer}},
+	title = {Non-Executable User Stack}},
+	url = {http://web.archive.org/web/*/http://www.false.com/security/linux-stack/}
+}
+
+@misc{etoh2001,
+	author = {H. Etoh and K. Yoda},
+	title = {{ProPolice}: Improved Stack Smashing Attack Detection},
+	booktitle = {IPSJ SIGNotes Computer Security (CSEC) 14 (Oct. 26)},
+	year = {2001},
+	month = {october},
 }
