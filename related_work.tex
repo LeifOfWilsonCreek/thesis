@@ -1,49 +1,53 @@
 \section{Related Work}
 
-XXX:  This is pretty messy.  It's pretty much just random thoughts now.
+There are many approaches to detecting security problems in C code, some during compile-time and some during run-time.
+While many of these approaches represent significant positive results, they all fall short.  These security holes only
+occur where there is a bug in the program.  So far, most of these methods can only detect an attack in progress and
+abort the program; they do not fix the underlying problem that there is a bug in the software.  In most cases, this is
+a ``safe'' thing to do, and although the program behaves in an undesirable way, disaster is averted.  In many cases,
+however, when a program crashes this causes a significant problem.  For example, a trapped buffer overrun bug in a
+kernel (one that would normally represent a security vulnerability, but has been detected with one of those methods).
+When applying a method of protection that aborts the program, this means the kernel panics.  Worse yet, a long-running
+program such as a database server may corrupt data when exiting abnormally.
 
-We will focus on overflow bugs.
-
-It is well known that C code tends to have security holes due to buffer
-overrun bugs and integer overflow bugs.  Many approaches have been applied
-to preventing, or at least detecting, these bugs.  While several have shown
-a substantial improvement, often with a minimal cost of efficiency, so far
-none of them have provided a solution that solves the problem in all cases.
-In fact, there is little hope that any solution can completely protect
-existing C code from the bugs it contains; ultimately, if the code has a
-bug, the best we can hope for (without modifying the language) is to limit
-the damage caused by it.  We would prefer to write code that is free of
-bugs in the first place, but experience has proven that it is simply
-infeasible to do this .
-
-The solution that Pit provides does come at a cost; however, the cost is
-optional and can be mitigated substantially with compiler optimizing
-techniques.
-
-, the tradeoff between security and efficiency still exists.  We find,
-however, that most of the time, this tradeoff is not as bad as it seems.  A
-tremendous amount of time is spent in a small fraction of a program's code.
-(XXX: find work to support this)  Therefore, we can easily reduce the
-speed of most of our code by a factor of, for example, five or ten with no
-noticeable impact, as long as the critical sections, that is sections where
-most of the time is spent, can still be written efficiently.  If we can
-easily guarantee that the code outside of the critical sections has no
-buffer overrun bugs or integer overflow bus, we can concentrate our efforts
-on making sure the critical sections are both secure and efficient.
+XXX: I haven't actually checked yet whether all of these abort
 
 \begin{itemize}
-\item
-Perl.  Perl code never has buffer overflows (explain why).  Also code
-is easier to write because of managed arrays and hashes.
-\item
-Articles about buffer and integer overflow vulnerabilities
-\item
-Safe Systems Programming Languages (wpeii.pdf) is worth referencing
-here.  [[Safe Systems Programming Languages (wpeii.pdf) is
-interesting, and I'm reading it more closely.  It seems to relate
-really well.  I like their goals for a programming language for
-systems; this describes a good distinction between languages like C
-and Pit and higher ones like Java.  It also introduced me to some
-interesting ways of protecting existing C code and a couple languages
-I hadn't heard of yet.  Start reading again at 4.2.]]
+\item Transparent Runtime Randomization\cite{xu2003}
+\item StackGuard\cite{cowan1998}
+\item SmashGuard\cite{ozdog2003}
+\item PointGuard\cite{cowan2003}
+\item Libverify
+\item RAD
+\item ProPolice\cite{etoh2001,zhivich2005}
+\item address obfuscation\cite{bhatkar2003}
+\item Non-Exec User Stack\cite{solardesigner}
+\item SafeC\cite{li2004}
+\item CCured\cite{li2004,zhivich2005}
+\item Vault\cite{li2004}
+\item Cyclone\cite{li2004}
+\item Chaperon\cite{zhivich2005}
+\item Valgrind\cite{zhivich2005}
+\item CRED\cite{zhivich2005}
+\item Insure++\cite{zhivich2005}
+\item TinyCC\cite{zhivich2005}
 \end{itemize}
+
+Ultimately, these solutions are not ideal, because even a totally successful approach to buffer overrun protection does
+not address non-control-data attacks\cite{chen2005}.  Protecting against these is an issue concerned more with code
+correctness than simple type safety, because every security hole is actually a bug in the program.  As bugs are a
+superset of security holes, most programs written in C are riddled with bugs.  Any language that provides abstraction
+for memory allocation will help prevent bugs such as the double free error.  In fact, any language that represents more
+logic with less code represents a proportional decrease in the number of bugs in the final program.  As better
+deterrents to buffer overrun attacks are developed, attackers will inevidably turn to attacks involving
+non-control-data.
+
+In many languages, it is impossible to have a buffer overrun bug, because the language guarantees that the buffer will
+be extended if an overrun happens or, if there is not enough memory available, the program will abort.  Some security
+solutions for C involve adding bounds checking, but these do not add the ability to extend buffers to the necessary
+length.  Pit always extends the buffer if necessary, thus freeing the programmer from ever needing to calculate how
+many elements are in an array.  Also, those that incur a performance penalty do not allow the programmer to choose
+whether the penalty is worth the benefit like Pit does.
+
+% Essentially, the computer is doing the same work that the programmer just did -- ensuring that enough memory
+% is allocated for each buffer.  It would be better to simply let the computer do the work...

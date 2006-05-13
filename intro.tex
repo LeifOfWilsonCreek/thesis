@@ -8,7 +8,7 @@ be managed manually.
 The goal is to create a language where the programmer can choose between allocating memory manually by using
 statically-typed ``\emph{primitive}'' variables or allowing the compiler to insert memory management code automatically
 by using dynamically-typed ``\emph{auto}'' variables.  This allows the programmer to choose between automatically
-ensuring that there are no buffer overrun or integer overflow vulnerabilities in the code at the cost of efficiency and
+ensuring that there are no buffer overrun\cite{alephone} or integer overflow\cite{ahmad2003} vulnerabilities in the code at the cost of efficiency and
 writing more efficient code at the cost of maintainability and more opportunities for bugs.  The innovation is that
 because the same language supports both, the programmer can choose to write code both ways in the same function, rather
 than choosing between one or the other for the entire module.
@@ -49,7 +49,7 @@ fallen short of complete success, where a successful approach must achieve a hig
 no buffer overrun bugs, no integer overflow bugs, and do so without an unacceptable loss of efficiency.  In general,
 when we talk about security in this paper, our scope is limited to buffer overrun and integer overflow bugs because
 they are the bugs that a programming language can help prevent, and this class of bugs covers the overwhelming majority
-of security holes\cite{xu2002}.
+of security holes.  \cite{xu2002, cowan2000, cowan2003}
 
 C is the language of choice for operating system code for good reasons.  Operating systems absolutely need easy access
 to in-line assembly code for hardware IO.  Also, they need to be able to write efficient code, as speed is a major
