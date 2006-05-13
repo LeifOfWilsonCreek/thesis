@@ -1,1 +1,12 @@
-% \section{Conclusion}
+\section{Conclusion}
+
+So far, low-level code has been almost exclusively written in C.  Pit is a much friendlier language for writing
+low-level code, and there is no penalty when the programmer chooses to use primitive variables.  When the programmer
+chooses to use autos, there is a substantial cost, but this cost is mitigated in two ways.  First, a decent optimizer
+will eliminate a substantial amount of the overhead, and second, the programmer can use autos only where the penalty is
+not important.  Because of the 80-20% distribution, the penalty will not be important in most of the code.  When
+efficiency is necessary, Pit provides an exceptionally easy way to interface the managed code with the unmanaged code.
+When using autos, the code is completely protected from buffer overruns, integer overflow bugs, and many other common
+subtle bugs security related and otherwise.  As Pit interfaces far more easily with C than most other languages, it can
+interface with code that is already written in C.  These considerations make Pit a superior language for low-level
+programming.

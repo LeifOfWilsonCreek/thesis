@@ -1,47 +1,5 @@
 \section{Body}
 
-\begin{itemize}
-\item
-	Overview
-\item
-	Autos
-\item
-	Security
-\item
-	Portability
-\item
-	C comparison
-\item
-	Perl comparison
-\item
-	Implementation:
-	\begin{itemize}
-	\item
-		Translation into assembler
-	\item
-		Compiler optimizations (substituting primitives for autos when possible)
-	\end{itemize}
-
-\item
-	Penalty reduction:
-	\begin{itemize}
-	\item
-		Convert auto to integer for loop counters.
-	\item
-		Sometimes alternative primitive code will not be substantially faster anyway.
-		For example, if the alternative code is complex and implements a hash with
-		reference counts to its elements, clearly it is better to use autos.  This
-		is a discussion that people have already written about in terms of Perl vs C,
-		so it will have many references.
-	\item
-		Copy-on-write.  Autos are not copied during assignment or when they are passed by-value to
-		functions.  Rather, an alias is created, and copying is delayed until the auto is modified.
-		Often the variable will never be modified.  In many cases, this may make autos faster than
-		primitive variable types.
-	\end{itemize}
-\end{itemize}
-
-
 C Comparison
 
 The following is a C program that adds pairs of numbers read from standard
