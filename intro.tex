@@ -34,7 +34,7 @@ assembly code to facilitate system programming, and it is well-suited for anythi
 kernels, system libraries, supporting software, network daemons, etc.
 
 
-\subsection{Security}
+\section{Security}
 
 Even today, after so much study and work, cutting edge operating systems still have a dismal outlook on security.  Even
 if all the bugs are fixed in existing code, new ones are constantly introduced with new code.  For example, nobody
@@ -75,26 +75,76 @@ because they don't have to audit the other code for these bugs and because the o
 write.  Effective use of Pit requires a programmer to be willing to accept this trade-off and use it to his advantage.
 
 
-\subsection{Portability}
+\subsection{C Comparison}
 
-Another long-standing problem with C is the output from translating the source into object format is not portable.  It
-is locked into a particular version of a particular operating system on a particular CPU.  Because there are so many
-combinations, the task of compiling is usually left to the end-users, creating much difficulty during installation.
-This is difficult even for people who are software developers.  While sometimes vendors will create distributions of
-software (either in source or binary form) that are ported to their operating system, this solution requires an
-enormous amount of maintenance by the vendor and often introduces an undesirably long delay before users can run new
-versions of their favorite software.  Worse, the availability of such a distribution has become a major consideration
-when choosing a platform.  Otherwise inferior operating system distributions may be used simply because they have
-better support for ported software.  Many software packages are simply unavailable for many operating system
+\begin{figure}
+	\sourceinput{comparison.c}
+	\caption{Example program in C}
+	\label{comparison.c}
+\end{figure}
+
+\begin{figure}
+	\sourceinput{comparison.p}
+	\caption{Figure \ref{comparison.c}, rewritten in Pit}
+	\label{comparison.p}
+\end{figure}
+
+\begin{figure}
+	\sourceinput{comparison2.p}
+	\caption{Figure \ref{comparison.c}, with some speed optimizations}
+	\label{comparison2.p}
+\end{figure}
+
+Figure \ref{comparison.c} shows a C program that adds pairs of numbers read from standard input.  Figure \ref{comparison.p} shows the same program
+written in Pit.  Notice that in Pit, autos can manage all the array sizes and memory allocation for us, thus
+eliminating any potential for mismanaged string buffers.  As shown in Figure \ref{comparison2.p}, they can also be managed manually just
+as easily as in C, with the same risk to security.  This is the trade-off between improving efficiency and improving
+security and maintainability.
+
+While figure \ref{comparison.c} clearly has no buffer overflow vulnerabilities, there are several ways they could
+easily be introduced either when the code is modified or as a simple miscalculation when writing it in the first place.
+For example, the wrong size could be passed to fgets(), a pointer error could be introduced where the string is parsed
+with strsep(), or an error could be introduced in the format string passed to printf.  Also notice that we had to set
+an arbitrary limit on the length of an input line, and while it is obviously possible to work around this, doing so
+makes the program much more complex and adds more opportunities for security holes.
+
+Figure \ref{comparison.p} shows the same program, this time written in Pit using autos.  Notice that neither the length
+of a string nor a pointer into the string are ever used.  Figure \ref{comparison2.p} shows the same program, this time
+written in Pit using some primitives.  While autos weren't completely eliminated here, but they could be.  In
+particular, \$in is implicitly converted to an auto when passed to \$string.split, and \$nums remains an auto.  Notice
+how easily primitives and autos can work together, allowing the programmer to choose precisely what code to optimize
+for efficiency at the risk of security and maintainability, and what code to optimize for security and maintainability
+at the cost of efficiency.
+
+
+\section{Portability}
+
+Portability represents the effort required to transfer a program from one system to another.  Another long-standing
+problem with C is programs usually must be distributed in source form, and the time-consuming process of compiling must
+be done by end-users.  This is because at compile-time, a program is locked into a particular version of a particular
+operating system on a particular CPU.  There are some systems to mitigate this; for example, the FreeBSD Ports
+Collection\cite{freebsd-ports} is a repository of software that has already been patched as necessary to allow it to be easily compiled on
+FreeBSD.  This is used to create pre-compiled packages that may be installed quickly by end-users.  NetBSD and OpenBSD,
+as well as several distributions of Linux, have similiar facilities for installing common software.  These projects
+represent an enormous amount of ongoing maintenance, as each port must be individually updated whenever original author
+releases a new version.  This often introduces an undesirably long delay before users can run new versions of their
+favorite software.  
+
+Unfortunately, the availability of such a porting system has become a major consideration
+when choosing an operating system.  Otherwise superior operating system distributions may be abandoned simply because
+they lack strong support for ported software.  Many software packages are simply unavailable for many operating system
 distributions.  Complicating systems further, some operating systems implement awkword compatibility layers for
 software that is only distributed for other operating systems; for example, FreeBSD implements a compatibility layer
-for Linux software.  Many programs are not available for FreeBSD at all, except by using an executable compiled for
-Linux under this compatiblity layer.  Using this compatibility layer requires installing all the required libraries
-twice.
+for Linux software, but to use this, a linux version of every shared library must be installed.  Many programs are not
+available for FreeBSD at all, except by using an executable compiled for Linux under this compatiblity layer.
 
-Application-level software written in Pit can be portable \emph{after} it is translated into object format (before it
-is linked with the system libraries).  A program can be translated into object format once, and the object files can be
-distributed to all operating systems for a particular CPU architecture.  During installation, the program is linked and
+While compiled code obviously cannot be portable between hardware architectures, it is not impractical to make object
+files portable between operating systems.  To do so, the system libraries need to provide a consistent interface to the
+operating system, as seen by object files, not just source code.  (Here, interface means a set of function prototypes.)
+This interface must be extensible in a way that remains back-compatible at the level of machine-code.
+
+The goal is to translate any application into object files just once, then distribute the object files to all operating
+systems for a particular CPU architecture.  During installation, the program is linked and
 copied into the appropriate place on the filesystem (the location will most likely still depend on which operating
 system).
 
@@ -103,32 +153,31 @@ things must be considered:
 
 \begin{itemize}
 \item
-	The system libraries cannot define preprocessor macros that are used in the application, as the contents of these macros are
+	The system libraries cannot define preprocessor macros that are used in the application's modules, as the contents of these macros are
 	almost certain to change.  This is generally not a significant issue as Pit does not require a preprocessor.  Interface files
-	are generated automatically, so as long as the function prototypes do not change (a prerequisite of the previous item), these
-	will always contain the same definitions.  Importing an interface file is simply a compiler statement rather than a full-fledged
-	preprocessor.
+	are generated automatically, so as long as the function prototypes do not change, these
+	will always contain the same definitions.
 \item
 	Variables passed between the system library and applications must be represented in a consistent way.  Most importantly, this
 	includes integers and structs.
 \end{itemize}
 
-C's preprocessor carries much blame for our problems with binary portability.  In C, library can declare macros that
+C's preprocessor carries much blame for our problems with binary portability.  In C, a library can declare macros that
 get resolved when the calling module is compiled, and later, a new version of this library may change the contents of
-these macros.  As Pit does not need a preprocessor, this is not a problem.  While a preprocessor can be applied to a
-source file if desired, as long as it isn't used to implement functionality in other modules, its affect will not cause
-portability problems.  Constant values and function calls can be used instead.
+these macros.  As Pit does not provide a preprocessor, this is not a problem.  A preprocessor can be applied to a
+source file if desired, as long as its affects are limited to that source file.  Usually, rather than using
+preprocessor macros, variables declared ``constant'' and function calls should be used instead.
 
 The other problem, variable passing, requires autos to solve.  Clearly, this sometimes involves a cost to efficiency.  This is
 not as bad as it seems at first, however, because not all values need to be passed in an extensible way.  For example,
 any value that represents something bounded by a memory size can be represented with an natural-sized integer (that is,
 an integer whose size matches the hardware's pointer size).  Thus, any integer representing an array index or size or
 the like can be represented with an integer of default size.  If the architecture is extended to a larger pointer size,
-all the code must be recompiled anyway.  This represents most of the integers passed between programs.
+all the code must be recompiled anyway.  This represents most of the integers passed between functions.
 
 On the other hand, consider an integer that represents an offset into a file.  A file's maximum size is dependent on
-the operating system.  In the not-so-distant past, file sizes were represented with a 32-bit variable, limiting them to
-4GB.  At the time this was decided, it was wasteful to use larger values, as an ``industrial size'' array of hard
+the operating system.  In the not-so-distant past, file sizes were represented with a 32-bit variable, limiting files
+to 4GB.  At the time this was decided, it was wasteful to use larger values, as an ``industrial size'' array of hard
 drives occupying many large machine rooms could store only a fraction of 4GB.  Today, we use a 64-bit value for
 representing offsets into files, but it is unreasonable to rely on that being large enough forever, particularly with
 the proliferation of distributed storage systems such as RAID in the consumer market.  In fact, Sun Microsystems has
@@ -146,7 +195,11 @@ allocated will always be sufficient to represent the number.  Fortunately, file 
 place that autos have to be used to store simple integers when communicating with system libraries, and then only when
 seeking to a new location in the file or representing the size of the whole file.  When reading or writing the file,
 the maximum amount that can be read is bounded by memory, so a natural-sized integer is guaranteed to be sufficient
-when representing the amount read or written in a single call.
+when representing the amount read or written in a single call.  As it is relatively rare to refer to an absolute
+position in a file, communicating a file offset is equally rare.  As this is the only place the performance penalty of
+autos is only incurred with regard to file IO, the cost is negligable.
+
+XXX: Add an example of calling seek() and tell() in Pit compared to C
 
 The final major difficulty with system library APIs is the format of structs.  Elements in a struct may be in a
 different orders or new additional elements may be present depending on the operating system.  A hash stored in an auto
@@ -160,8 +213,10 @@ unused field is simply interpreted as undef and the system library can take an a
 adding fields for new protocols, there is no concern about whether the size of the variable.  All the information about
 the connection can be encapsulated into an extensible and portable format.
 
+XXX: Add an example here of some code that makes a network connection in Pit, and compare with C.
 
-\subsection{Comparison to Other Languages}
+
+\section{Comparison to Other Languages}
 
 \begin{tabular}{ | l || c | c | c | }
 \hline
@@ -208,14 +263,14 @@ Eval							& N & N & Y \\
 
 Yes, No, Clumsy, Not Applicable
 
-\subsubsection{Manual and automatic memory allocation}
+\subsection{Manual and automatic memory allocation}
 
 In Pit, the programmer chooses which variables are allocated automatically.  If he declares a variable to be the auto
 type, the memory for it and anything stored in it is allocated automatically, and reference-counting garbage collection
 is performed automatically.  If he declares a variable to be a primitive type, he must manually allocate and free
 memory the same way he would in C.
 
-\subsubsection{Automatic module interfaces}
+\subsection{Automatic module interfaces}
 
 In C, the programmer must meticulously create a header file for every module.  Typically, almost all the information in
 the header file is duplicated in the module's source file.  All of this duplicated information could be generated
@@ -235,7 +290,7 @@ require a preprocessor.  Often a preprocessor provides other useful functionalit
 of a preprocessor; rather it simply allows the language to be useful without a preprocessor.  Any text processor such
 as M4 or C's preprocessor can be used for this purpose.
 
-\subsubsection{Namespaces}
+\subsection{Namespaces}
 
 C simply does not support namespaces.  Perl supports namespaces in the form of ``packages'', but they are implemented
 in an ususual way.  Pits support namespaces well, including support for declaring ``private'' symbols that are only
@@ -245,7 +300,7 @@ namespace for each module with the name of the file it is contained in.  This al
 dependencies without explicitly naming which modules should be linked in.  Many other languages support similar
 functionality.
 
-\subsubsection{Homogeneous arrays (strings)}
+\subsection{Homogeneous arrays (strings)}
 
 C supports homogeneous arrays of any type, including ``char'', which is used to build strings of text.  Perl supports a
 text strings, but no other homogeneous array type.  Individual characters cannot be extracted from Perl strings except
@@ -254,13 +309,13 @@ homogeneous array.  To differentiate between homogeneous and heterogeneous array
 latter is an array.  Text is a string of integers; strings of floats, structs, or strings may also be declared.  A Pit
 string is equivalent to an array in C parlance.
 
-\subsubsection{Heterogeneous arrays}
+\subsection{Heterogeneous arrays}
 
 In Perl parlance, arrays are heterogeneous.  Except for indivisible sequences of 8-bit characters, there is no support
 for homogeneous arrays.  C does not support heterogeneous arrays.  In Pit, autos can store heterogeneous arrays or
 strings of integers (but not strings of other types).
 
-\subsubsection{Structs and Hashes}
+\subsection{Structs and Hashes}
 
 Structs are, of course, borrowed from C.  A struct is exactly the same thing in C and Pit.  Perl has no support for
 proper structs, but a struct can be approximated with a hash.  The reason for this is structs and hashes represent
@@ -268,13 +323,13 @@ nearly the same thing:  A set of names mapped to a set of values.  The primary d
 struct are static, while elements of a hash can be added or deleted at runtime.  In Pit, autos cannot store structs;
 instead, a struct can be approximated with a hash.  Primitive variables can be declared with the struct type.
 
-\subsubsection{Inline assembly}
+\subsection{Inline assembly}
 
 In low-level programming, it is often unavoidable to use inline assembly code, however undesirable it may be, for
 interaction with hardware, manually optimizing code, switching tasks or managing memory paging in an operatin system,
 etc.  Pit's interface to assembly code is nearly identical to GCC's interface.
 
-\subsubsection{Exceptions}
+\subsection{Exceptions}
 
 Fundamentally, an ``exception'' is a branch that can exit several functions simultaneously, usually used for error
 handling; in most languages, exceptions have additional features that significantly improve their usability, but this
@@ -288,11 +343,11 @@ speaks a different language or uses a different operating system, the trap for t
 support must provide a way to report a dependable identifier for an error, a way to map that identifier to a
 user-friendly message, and a way for intermediate functions to clean up their workspace when an exception occurs.
 
-% \subsubsection{Abstract data types}
+% \subsection{Abstract data types}
 
 % XXX: more work
 
-\subsubsection{Automated compilation}
+\subsection{Automated compilation}
 
 When compiling a C program, the programmer must somehow describe each command required.  Each module of the
 program must be compiled explicitly.  Then the modules must be linked with the necessary libraries explicitly
@@ -321,10 +376,10 @@ While other steps may be necessary to compile or install the program, the basic 
 automated.  Also, interface files are generated automatically instead of maintained manually.  These are
 clear advantages over C.
 
-% \subsubsection{Vector math}
+% \subsection{Vector math}
 
 % XXX: more work
 
-% \subsubsection{Eval}
+% \subsection{Eval}
 
 % XXX: more work
