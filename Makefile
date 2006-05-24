@@ -5,6 +5,10 @@ MAIN.dvi: Makefile *.tex *.bib
 	latex MAIN
 	bibtex MAIN
 	latex MAIN
+	@echo
+	@echo
+	@echo ================ Final pass -- ignore errors above ================
+	@echo
 	latex MAIN
 
 MAIN.ps: MAIN.dvi
