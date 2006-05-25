@@ -16,15 +16,16 @@ than choosing between one or the other for the entire module.
 The core language and primitive variables are similar to C, and the auto variables are similar in many respects to
 variables implemented by scripting languages such as Perl or Python.  Primitives are simply the classical variable
 types provided by C:  integer, float, string, struct, and function, plus trivial variations such as characters,
-pointers, signed or unsigned integers, etc, with identical semantics.  Autos are implemented syntactically as another
-type of variable.  Semantically, ``auto'' represents a meta-type, indicating that the type of the variable is dynamic
+pointers, signed or unsigned integers, etc, with static sizes and identical semantics.  Autos are implemented
+syntactically as another type of variable; that is, rather than declaring a variable as ``integer'' or ``float'', it is
+declared ``auto''.  Semantically, ``auto'' represents a meta-type, indicating that the type of the variable is dynamic
 and determined automatically during run-time by the value assigned to it.  Memory for autos is allocated and freed
 automatically.  The types that can be stored in an auto are integer, float, string, array, hash (instead of struct),
-and reference (instead of pointer).  (In Pit, we define ``strings'' as homogeneous and ``arrays'' as heterogeneous.)
+and reference (instead of pointer).  (In Pit, we define ``strings'' as homogeneous sequences and ``arrays'' as heterogeneous sequences.)
 Automatic memory management includes the subvalues stored in an auto, such as elements in strings, arrays, and hashes,
 and referents of references.  The compiler implements autos by translating every operation on an auto into a function
-call to a supporting library.  The language is self-hosting, in the sense that eventually the compiler tools and
-supporting libraries for the language will be written in the language with no tools written in other languages.  This
+call to a supporting library.  Pit is self-hosting, in the sense that eventually the compiler tools and
+supporting libraries for Pit will be written in Pit with no tools written in other languages.  This
 is possible because primitives can be used to construct the infrastructure required by autos.
 
 % XXX: This might be a good place to mention dynamic languages and reflective languages.  This should also be in Related Work.
@@ -55,16 +56,15 @@ C is the language of choice for operating system code for good reasons.  Operati
 to in-line assembly code for hardware IO.  Also, they need to be able to write efficient code, as speed is a major
 point of competition between operating systems; this means that if there are any inefficient high-level features, they
 need to be optional (C has none).  A language that requires an interpreter or virtual machine is clearly not an option.
-Many other languages have demonstrated how automatic memory management is beneficial to security; however none of these
-are a viable replacement for C because none of them have these necessary properties.  Pit fits all of these
+Pit fits all of these
 requirements, and provides a way to choose when to use automatic memory management as well.  Pit also interacts more
-easily with C than most other languages.  This makes it a good step forward from C.
+easily with C than most other languages.  This makes it a good step forward from C with little cost.
 
 Pit is by no means a silver bullet.  The advantage is that \emph{the programmer gets to choose} whether the benefit is
 worth the penalty, rather than being forced to write an entire module in a low-maintenance high-overhead language or in
-a high-maintenance low-overhead language.  To effectively use Pit, a programmer must choose well between primitives and
+a high-maintenance low-overhead language.  To effectively use Pit, a programmer must choose wisely between primitives and
 autos.  This requires a balance of efficiency and maintainability.  As long as a programmer only uses autos, there is
-an absolute guarantee that his code will have these security bugs.  However, this guarantee comes at a significant cost
+an absolute guarantee that his code will not have these security bugs.  However, this guarantee comes at a significant cost
 to efficiency.  On the other hand, every time a programmer uses primitives, he runs the risk of introducing security
 bugs.  Fortunately, it is well-established that a small amount of code accounts for most of the execution time of a
 program; the widely accepted estimate is that 10-20\% of the code accounts for 80-90\% of the execution time.  We'll
@@ -72,24 +72,24 @@ call these the \emph{time-critical sections} of code.  This is easy to take adva
 the code is written using primitives, then we have probably eliminated around 80-90\% of the security holes in the
 code.  Additionally, this leaves programmers more time to carefully audit the remaining code for security bugs, both
 because they don't have to audit the other code for these bugs and because the other code was easier and faster to
-write.  Effective use of Pit requires a programmer to be willing to accept this trade-off and use it to his advantage.
+write initially.  Effective use of Pit requires a programmer to be willing to accept this trade-off and use it to his advantage.
 
 
 \subsection{C Comparison}
 
-\begin{figure}
+\begin{figure}[ht]
 	\sourceinput{comparison.c}
 	\caption{Example program in C}
 	\label{comparison.c}
 \end{figure}
 
-\begin{figure}
+\begin{figure}[ht]
 	\sourceinput{comparison.p}
 	\caption{Figure \ref{comparison.c}, rewritten in Pit}
 	\label{comparison.p}
 \end{figure}
 
-\begin{figure}
+\begin{figure}[ht]
 	\sourceinput{comparison2.p}
 	\caption{Figure \ref{comparison.c}, with some speed optimizations}
 	\label{comparison2.p}
@@ -109,8 +109,12 @@ an arbitrary limit on the length of an input line, and while it is obviously pos
 makes the program much more complex and adds more opportunities for security holes.
 
 Figure \ref{comparison.p} shows the same program, this time written in Pit using autos.  Notice that neither the length
-of a string nor a pointer into the string are ever used.  Figure \ref{comparison2.p} shows the same program, this time
-written in Pit using some primitives.  While autos weren't completely eliminated here, but they could be.  In
+of a string nor a pointer into the string are ever used, and the bounds on any indexing operations for autos are
+checked at run-time.  All the sizes calculated automatically because memory is managed automatically.  This means the
+opportunities for security holes that were present in Figure \ref{comparison.c} are eliminated.
+
+As an example of how to trade security for efficiency, Figure \ref{comparison2.p} shows the same program written in
+Pit, this time using some primitives.  Although autos weren't completely eliminated here, they could be.  In
 particular, \$in is implicitly converted to an auto when passed to \$string.split, and \$nums remains an auto.  Notice
 how easily primitives and autos can work together, allowing the programmer to choose precisely what code to optimize
 for efficiency at the risk of security and maintainability, and what code to optimize for security and maintainability
@@ -121,7 +125,8 @@ at the cost of efficiency.
 
 Portability represents the effort required to transfer a program from one system to another.  Another long-standing
 problem with C is programs usually must be distributed in source form, and the time-consuming process of compiling must
-be done by end-users.  This is because at compile-time, a program is locked into a particular version of a particular
+be done by end-users.  For large applications on a mid-range computer, this can literally take days.  This is necessary
+because at compile-time, a program is locked into a particular version of a particular
 operating system on a particular CPU.  There are some systems to mitigate this; for example, the FreeBSD Ports
 Collection\cite{freebsd-ports} is a repository of software that has already been patched as necessary to allow it to be easily compiled on
 FreeBSD.  This is used to create pre-compiled packages that may be installed quickly by end-users.  NetBSD and OpenBSD,
@@ -135,7 +140,7 @@ when choosing an operating system.  Otherwise superior operating system distribu
 they lack strong support for ported software.  Many software packages are simply unavailable for many operating system
 distributions.  Complicating systems further, some operating systems implement awkword compatibility layers for
 software that is only distributed for other operating systems; for example, FreeBSD implements a compatibility layer
-for Linux software, but to use this, a linux version of every shared library must be installed.  Many programs are not
+for Linux software, but to use this, a Linux version of every shared library must be installed.  Many programs are not
 available for FreeBSD at all, except by using an executable compiled for Linux under this compatiblity layer.
 
 While compiled code obviously cannot be portable between hardware architectures, it is not impractical to make object
@@ -143,13 +148,18 @@ files portable between operating systems.  To do so, the system libraries need t
 operating system, as seen by object files, not just source code.  (Here, interface means a set of function prototypes.)
 This interface must be extensible in a way that remains back-compatible at the level of machine-code.
 
-The goal is to translate any application into object files just once, then distribute the object files to all operating
-systems for a particular CPU architecture.  During installation, the program is linked and
-copied into the appropriate place on the filesystem (the location will most likely still depend on which operating
+The goal is to translate any application into object files just once for each hardware architecture, then distribute
+the object files to all operating systems for that hardware architecture.  During installation, the program is linked
+and copied into the appropriate place on the filesystem (the location will most likely still depend on which operating
 system).
 
-To accomplish this, everything operating system dependent must either be eliminated or resolved at link-time.  Several
-things must be considered:
+In C, the number of times a program must be compiled can be described as the product n*m, where n is the number of
+hardware architectures and m is the number of operating systems.  If object files are portable, this is reduced to n,
+because the object files can be compiled once and distributed in compiled form.  To do this, parts of the compilation
+that are dependent on the operating system must be eliminated or resolved at link-time instead of during code
+generation.
+
+Two things must be considered:
 
 \begin{itemize}
 \item
