@@ -78,42 +78,42 @@ write initially.  Effective use of Pit requires a programmer to be willing to ac
 \subsection{C Comparison}
 
 \begin{figure}[ht]
-	\sourceinput{comparison.c}
+	\sourceinput{intro_security.c}
 	\caption{Example program in C}
-	\label{comparison.c}
+	\label{intro_security.c}
 \end{figure}
 
 \begin{figure}[ht]
-	\sourceinput{comparison.p}
-	\caption{Figure \ref{comparison.c}, rewritten in Pit}
-	\label{comparison.p}
+	\sourceinput{intro_security.p}
+	\caption{Figure \ref{intro_security.c}, rewritten in Pit}
+	\label{intro_security.p}
 \end{figure}
 
 \begin{figure}[ht]
-	\sourceinput{comparison2.p}
-	\caption{Figure \ref{comparison.c}, with some speed optimizations}
-	\label{comparison2.p}
+	\sourceinput{intro_security2.p}
+	\caption{Figure \ref{intro_security.c}, with some speed optimizations}
+	\label{intro_security2.p}
 \end{figure}
 
-Figure \ref{comparison.c} shows a C program that adds pairs of numbers read from standard input.  Figure \ref{comparison.p} shows the same program
+Figure \ref{intro_security.c} shows a C program that adds pairs of numbers read from standard input.  Figure \ref{intro_security.p} shows the same program
 written in Pit.  Notice that in Pit, autos can manage all the array sizes and memory allocation for us, thus
-eliminating any potential for mismanaged string buffers.  As shown in Figure \ref{comparison2.p}, they can also be managed manually just
+eliminating any potential for mismanaged string buffers.  As shown in Figure \ref{intro_security2.p}, they can also be managed manually just
 as easily as in C, with the same risk to security.  This is the trade-off between improving efficiency and improving
 security and maintainability.
 
-While figure \ref{comparison.c} clearly has no buffer overflow vulnerabilities, there are several ways they could
+While figure \ref{intro_security.c} clearly has no buffer overflow vulnerabilities, there are several ways they could
 easily be introduced either when the code is modified or as a simple miscalculation when writing it in the first place.
 For example, the wrong size could be passed to fgets(), a pointer error could be introduced where the string is parsed
 with strsep(), or an error could be introduced in the format string passed to printf.  Also notice that we had to set
 an arbitrary limit on the length of an input line, and while it is obviously possible to work around this, doing so
 makes the program much more complex and adds more opportunities for security holes.
 
-Figure \ref{comparison.p} shows the same program, this time written in Pit using autos.  Notice that neither the length
+Figure \ref{intro_security.p} shows the same program, this time written in Pit using autos.  Notice that neither the length
 of a string nor a pointer into the string are ever used, and the bounds on any indexing operations for autos are
 checked at run-time.  All the sizes calculated automatically because memory is managed automatically.  This means the
-opportunities for security holes that were present in Figure \ref{comparison.c} are eliminated.
+opportunities for security holes that were present in Figure \ref{intro_security.c} are eliminated.
 
-As an example of how to trade security for efficiency, Figure \ref{comparison2.p} shows the same program written in
+As an example of how to trade security for efficiency, Figure \ref{intro_security2.p} shows the same program written in
 Pit, this time using some primitives.  Although autos weren't completely eliminated here, they could be.  In
 particular, \$in is implicitly converted to an auto when passed to \$string.split, and \$nums remains an auto.  Notice
 how easily primitives and autos can work together, allowing the programmer to choose precisely what code to optimize
