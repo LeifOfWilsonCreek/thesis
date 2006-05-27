@@ -150,9 +150,8 @@ This interface must be extensible in a way that remains back-compatible at the l
 
 The goal is to translate any application into object files just once for each hardware architecture, then distribute
 the object files to all operating systems for that hardware architecture.  During installation, the program is linked
-and copied into the appropriate place on the filesystem (the location will most likely still depend on which operating
-system).
-
+and copied into the appropriate place on the filesystem.  While there will still be portability issues, most notably
+the location on the filesystem, this will substantially mitigate the amount of effort required when porting software.
 In C, the number of times a program must be compiled can be described as the product n*m, where n is the number of
 hardware architectures and m is the number of operating systems.  If object files are portable, this is reduced to n,
 because the object files can be compiled once and distributed in compiled form.  To do this, parts of the compilation
@@ -176,7 +175,23 @@ C's preprocessor carries much blame for our problems with binary portability.  I
 get resolved when the calling module is compiled, and later, a new version of this library may change the contents of
 these macros.  As Pit does not provide a preprocessor, this is not a problem.  A preprocessor can be applied to a
 source file if desired, as long as its affects are limited to that source file.  Usually, rather than using
-preprocessor macros, variables declared ``constant'' and function calls should be used instead.
+preprocessor macros, variables declared ``constant'' and function calls should be used instead.  For example, if the C
+head file fragment shown in Figure \ref{intro_portability_preproc.c} were in a system library, it would cause object
+files compiled with it to be incompatible with any system that implements the contents of the macro differently (for
+example, by changing the 0x4 to a different value).  Writing EMIT as a function rather than a preprocessor macro
+prevents the compiler from placing the code from in-line in dependent modules, which causes the dependency to be
+resolved at link-time instead.  If the step of linking is postponed until the program is installed, the object files
+are still portable.
+
+\begin{figure}[ht]
+	\begin{sourcestyle}
+		\begin{verbatimtab}[\sourcetabsize]
+#define EMIT_FOO_FLAG(a) ((a) & 0x4 ? puts("True") : puts("False"))
+		\end{verbatimtab}
+	\end{sourcestyle}
+	\caption{Header for a C library that causes dependent programs to lose portability when translated into an object files}
+	\label{intro_portability_preproc.c}
+\end{figure}
 
 The other problem, variable passing, requires autos to solve.  Clearly, this sometimes involves a cost to efficiency.  This is
 not as bad as it seems at first, however, because not all values need to be passed in an extensible way.  For example,
@@ -193,11 +208,11 @@ representing offsets into files, but it is unreasonable to rely on that being la
 the proliferation of distributed storage systems such as RAID in the consumer market.  In fact, Sun Microsystems has
 already designed a filesystem called ZFS that supports files up to $2^{128}$ bytes in size, and as virtually no
 operating systems currently ship with system libraries that do not use a 64-bit integer for this, another painful
-transition is imminent for C programs.  Standard C libraries address this by using \emph{off\_t} to represent file
+transition is imminent for C programs.  Standard C libraries address this by using off\_t to represent file
 offsets.  While this allows the size to be increased without modifying the source code to a program, this is still
 unsatisfactory, as it requires the program to be recompiled when a 128-bit integer is required.  In particular, during
 the transition period, the compilation generates different assembler code depending on whether the target operating
-system has switched to a 128-bit \emph{off\_t} or is still using a 64-bit \emph{off\_t}.  However, simply compiling two
+system has switched to a 128-bit off\_t or is still using a 64-bit off\_t.  However, simply compiling two
 versions is infeasible, because other data types are likely to be in transition as well, each of which doubles
 the number of compiled versions required.  A better solution is to abstract the type of a file offset out of the
 compiled code entirely.  An auto can represent the integer without requiring a particular size; the amount of memory
@@ -209,7 +224,25 @@ when representing the amount read or written in a single call.  As it is relativ
 position in a file, communicating a file offset is equally rare.  As this is the only place the performance penalty of
 autos is only incurred with regard to file IO, the cost is negligable.
 
-XXX: Add an example of calling seek() and tell() in Pit compared to C
+\begin{figure}[ht]
+	\begin{sourcestyle}
+		\begin{verbatimtab}[\sourcetabsize]int fseeko(FILE *stream, off_t offset, int whence);\end{verbatimtab}
+	\end{sourcestyle}
+	\caption{This C function prototype is unportable because the size of off\_t will vary between operating systems.}
+	\label{intro_portability_proto.c}
+\end{figure}
+
+\begin{figure}[ht]
+	\begin{sourcestyle}
+		\begin{verbatimtab}[\sourcetabsize]public function(in auto $file, in auto $offset, in char $whence) $seek prototype;\end{verbatimtab}
+	\end{sourcestyle}
+	\caption{This Pit function prototype is portable because \$offset can be any size integer.  At run-time, the
+		system library will convert it to what the kernel requires.  If the conversion would truncates the
+		value, the system library throws an exception back to the caller.  \$whence is simply the letter b,
+		h, or e, meaning the offset is relative to the ``beginning'', ``here'', or ``end''.  This way, the
+		the C preprocessor macros SEEK\_SET, SEEK\_CUR, and SEEK\_END are unnecessary.}
+	\label{intro_portability_proto.p}
+\end{figure}
 
 The final major difficulty with system library APIs is the format of structs.  Elements in a struct may be in a
 different orders or new additional elements may be present depending on the operating system.  A hash stored in an auto
