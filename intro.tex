@@ -5,7 +5,7 @@ substantial positive impact on maintainability, security, and portability.  The 
 management is \emph{optionally} automated.  In one function, some variables can be managed automatically and others can
 be managed manually.
 
-The goal is to create a language where the programmer can choose between allocating memory manually by using
+The goal is to create a language where the programmer can choose between allocating memory manually (the same as in C) by using
 statically-typed ``\emph{primitive}'' variables or allowing the compiler to insert memory management code automatically
 by using dynamically-typed ``\emph{auto}'' variables.  This allows the programmer to choose between automatically
 ensuring that there are no buffer overrun\cite{alephone} or integer overflow\cite{ahmad2003} vulnerabilities in the code at the cost of efficiency and
@@ -15,14 +15,16 @@ than choosing between one or the other for the entire module.
 
 The core language and primitive variables are similar to C, and the auto variables are similar in many respects to
 variables implemented by scripting languages such as Perl or Python.  Primitives are simply the classical variable
-types provided by C:  integer, float, string, struct, and function, plus trivial variations such as characters,
-pointers, signed or unsigned integers, etc, with static sizes and identical semantics.  Autos are implemented
-syntactically as another type of variable; that is, rather than declaring a variable as ``integer'' or ``float'', it is
+types provided by C:  integer, float, string, struct, and function (including trivial variations such as characters,
+pointers, signed or unsigned integers, etc) with static sizes and identical semantics.  Autos are implemented
+syntactically as another type of variable; that is, rather than declaring a variable as ``integer'' or ``struct'', it is
 declared ``auto''.  Semantically, ``auto'' represents a meta-type, indicating that the type of the variable is dynamic
 and determined automatically during run-time by the value assigned to it.  Memory for autos is allocated and freed
-automatically.  The types that can be stored in an auto are integer, float, string, array, hash (instead of struct),
-and reference (instead of pointer).  (In Pit, we define ``strings'' as homogeneous sequences and ``arrays'' as heterogeneous sequences.)
-Automatic memory management includes the subvalues stored in an auto, such as elements in strings, arrays, and hashes,
+automatically.  The types that can be stored in an auto are integer, fraction, string (of homogeneous integers only), array
+(actually this is a string of autos), hash (instead of struct),
+and reference (instead of pointer).  (In Pit, we define ``strings'' as homogeneous sequences and ``arrays'' as
+heterogeneous sequences.  C sequences are herein referred to as strings, but this need not refer to a string of characters.)
+Automatic memory management includes the subvalues stored in an auto, such as elements in arrays and hashes,
 and referents of references.  The compiler implements autos by translating every operation on an auto into a function
 call to a supporting library.  Pit is self-hosting, in the sense that eventually the compiler tools and
 supporting libraries for Pit will be written in Pit with no tools written in other languages.  This
@@ -32,7 +34,8 @@ is possible because primitives can be used to construct the infrastructure requi
 
 Pit is targeted at making low-level code more secure, portable, and maintainable.  It includes support for in-line
 assembly code to facilitate system programming, and it is well-suited for anything C is well-suited for, including
-kernels, system libraries, supporting software, network daemons, etc.
+kernels, system libraries, supporting software, network daemons, etc.  However, the inclusion of autos drastically
+reduces the amount of code required for most programs.
 
 
 \section{Security}
@@ -42,7 +45,7 @@ if all the bugs are fixed in existing code, new ones are constantly introduced w
 reasonably expects the existing operating systems to ever be free of buffer overrun bugs until there are new
 innovations.  Until then, we must settle for staying one step ahead of attackers.  Operating system code is undoubtedly
 the most widely used code, since every computer needs it.  This makes it the most targeted code for malicious
-attackers, and yet, it is also probably the most widely audited code as well, and to date, nobody has produced a modern
+attackers and probably the most widely audited code as well, but to date, nobody has produced a modern
 operating system that is free of security problems.  OpenBSD is probably the operating system with the most proactive
 approach to security, and after many years it is still unusual for them to go even a few months without finding another
 buffer overflow bug\cite{openbsd-security}.  Many good ideas have been developed to improve security for low-level code, and yet all have
@@ -52,7 +55,7 @@ when we talk about security in this paper, our scope is limited to buffer overru
 they are the bugs that a programming language can help prevent, and this class of bugs covers the overwhelming majority
 of security holes.  \cite{xu2002, cowan2000, cowan2003}
 
-C is the language of choice for operating system code for good reasons.  Operating systems absolutely need easy access
+C is the language of choice for operating system code for good reasons.  Operating system programmers absolutely need easy access
 to in-line assembly code for hardware IO.  Also, they need to be able to write efficient code, as speed is a major
 point of competition between operating systems; this means that if there are any inefficient high-level features, they
 need to be optional (C has none).  A language that requires an interpreter or virtual machine is clearly not an option.
@@ -95,11 +98,11 @@ write initially.  Effective use of Pit requires a programmer to be willing to ac
 	\label{intro_security2.p}
 \end{figure*}
 
-Figure \ref{intro_security.c} shows a C program that adds pairs of numbers read from standard input.  Figure \ref{intro_security.p} shows the same program
-written in Pit.  Notice that in Pit, autos can manage all the array sizes and memory allocation for us, thus
-eliminating any potential for mismanaged string buffers.  As shown in Figure \ref{intro_security2.p}, they can also be managed manually just
-as easily as in C, with the same risk to security.  This is the trade-off between improving efficiency and improving
-security and maintainability.
+Figure \ref{intro_security.c} shows a C program that adds pairs of numbers read from standard input.  Figure
+\ref{intro_security.p} shows the same program written in Pit.  Notice that in Pit, autos can manage all the array sizes
+and memory allocation for us, thus eliminating any potential for mismanaged string buffers.  As shown in Figure
+\ref{intro_security2.p}, they can also be managed manually just as easily as in C, with the same risk to
+security.  This is the trade-off between improving efficiency and improving security and maintainability.
 
 While figure \ref{intro_security.c} clearly has no buffer overflow vulnerabilities, there are several ways they could
 easily be introduced either when the code is modified or as a simple miscalculation when writing it in the first place.
@@ -108,8 +111,8 @@ with strsep(), or an error could be introduced in the format string passed to pr
 an arbitrary limit on the length of an input line, and while it is obviously possible to work around this, doing so
 makes the program much more complex and adds more opportunities for security holes.
 
-Figure \ref{intro_security.p} shows the same program, this time written in Pit using autos.  Notice that neither the length
-of a string nor a pointer into the string are ever used, and the bounds on any indexing operations for autos are
+Figure \ref{intro_security.p} shows the same program, this time written in Pit using autos.  Notice that neither the
+length of a string nor a pointer into the string are ever used, and the bounds on any indexing operations for autos are
 checked at run-time.  All the sizes calculated automatically because memory is managed automatically.  This means the
 opportunities for security holes that were present in Figure \ref{intro_security.c} are eliminated.
 
@@ -125,15 +128,16 @@ at the cost of efficiency.
 
 Portability represents the effort required to transfer a program from one system to another.  Another long-standing
 problem with C is programs usually must be distributed in source form, and the time-consuming process of compiling must
-be done by end-users.  For large applications on a mid-range computer, this can literally take days.  This is necessary
-because at compile-time, a program is locked into a particular version of a particular
-operating system on a particular CPU.  There are some systems to mitigate this; for example, the FreeBSD Ports
-Collection\cite{freebsd-ports} is a repository of software that has already been patched as necessary to allow it to be easily compiled on
-FreeBSD.  This is used to create pre-compiled packages that may be installed quickly by end-users.  NetBSD and OpenBSD,
-as well as several distributions of Linux, have similiar facilities for installing common software.  These projects
-represent an enormous amount of ongoing maintenance, as each port must be individually updated whenever original author
-releases a new version.  This often introduces an undesirably long delay before users can run new versions of their
-favorite software.  
+be done by end-users.  For large applications on a mid-range computer, this can literally take days of CPU time, to say
+nothing of time required of people.  This is necessary because at compile-time, a program is locked into a particular
+version of a particular operating system on a particular CPU.  There are some systems to mitigate this; for example,
+the FreeBSD Ports Collection\cite{freebsd-ports} is a repository of software that has already been patched as necessary
+to allow it to be easily compiled on FreeBSD.  This is used to create pre-compiled packages that may be installed
+quickly by end-users.  NetBSD and OpenBSD, as well as several distributions of Linux, have similiar facilities for
+installing common software.  These projects represent an enormous amount of ongoing maintenance, as each port must be
+individually updated whenever original author releases a new version and because these systems frequently break as a
+result of trivial differences in C libraries between systems.  This often introduces an undesirably long delay before
+users can run new versions of their favorite software.
 
 Unfortunately, the availability of such a porting system has become a major consideration
 when choosing an operating system.  Otherwise superior operating system distributions may be abandoned simply because
@@ -145,30 +149,33 @@ available for FreeBSD at all, except by using an executable compiled for Linux u
 
 While compiled code obviously cannot be portable between hardware architectures, it is not impractical to make object
 files portable between operating systems.  To do so, the system libraries need to provide a consistent interface to the
-operating system, as seen by object files, not just source code.  (Here, interface means a set of function prototypes.)
-This interface must be extensible in a way that remains back-compatible at the level of machine-code.
+operating system, as seen by object files, not just as seen by source code.  (Here, interface means a set of function
+prototypes.)  This interface must be extensible in a way that remains back-compatible at the level of machine-code.
 
 The goal is to translate any application into object files just once for each hardware architecture, then distribute
 the object files to all operating systems for that hardware architecture.  During installation, the program is linked
 and copied into the appropriate place on the filesystem.  While there will still be portability issues, most notably
 the location on the filesystem, this will substantially mitigate the amount of effort required when porting software.
+System-specific configuration issues such as paths can be abstracted into variables in a separate module that is
+compiled at installation time.
+
 In C, the number of times a program must be compiled can be described as the product n*m, where n is the number of
 hardware architectures and m is the number of operating systems.  If object files are portable, this is reduced to n,
 because the object files can be compiled once and distributed in compiled form.  To do this, parts of the compilation
 that are dependent on the operating system must be eliminated or resolved at link-time instead of during code
 generation.
 
-Two things must be considered:
+Two important things must be considered:
 
 \begin{itemize}
 \item
-	The system libraries cannot define preprocessor macros that are used in the application's modules, as the contents of these macros are
-	almost certain to change.  This is generally not a significant issue as Pit does not require a preprocessor.  Interface files
-	are generated automatically, so as long as the function prototypes do not change, these
+	The system libraries cannot define preprocessor macros that are used in the application's modules, as the contents of
+	these macros are almost certain to change.  This is generally not a significant issue as Pit does not require a
+	preprocessor.  Interface files are generated automatically, so as long as the function prototypes do not change, these
 	will always contain the same definitions.
 \item
-	Variables passed between the system library and applications must be represented in a consistent way.  Most importantly, this
-	includes integers and structs.
+	Variables passed between the system library and applications must be represented in a consistent way.  Most
+	importantly, this includes integers and structs.
 \end{itemize}
 
 C's preprocessor carries much blame for our problems with binary portability.  In C, a library can declare macros that
@@ -176,11 +183,11 @@ get resolved when the calling module is compiled, and later, a new version of th
 these macros.  As Pit does not provide a preprocessor, this is not a problem.  A preprocessor can be applied to a
 source file if desired, as long as its affects are limited to that source file.  Usually, rather than using
 preprocessor macros, variables declared ``constant'' and function calls should be used instead.  For example, if the C
-head file fragment shown in Figure \ref{intro_portability_preproc.c} were in a system library, it would cause object
+header file fragment shown in Figure \ref{intro_portability_preproc.c} were in a system library, it would cause object
 files compiled with it to be incompatible with any system that implements the contents of the macro differently (for
-example, by changing the 0x4 to a different value).  Writing EMIT as a function rather than a preprocessor macro
-prevents the compiler from placing the code from in-line in dependent modules, which causes the dependency to be
-resolved at link-time instead.  If the step of linking is postponed until the program is installed, the object files
+example, by changing the 0x4 to a different value).  Writing EMIT\_FOO\_FLAG as a function rather than a preprocessor
+macro prevents the compiler from resolving the dependency at compile-time in dependent modules; rather, the dependency
+is resolved at link-time.  If the step of linking is postponed until after the program is distributed, the object files
 are still portable.
 
 \begin{figure*}[ht]
@@ -193,12 +200,14 @@ are still portable.
 	\label{intro_portability_preproc.c}
 \end{figure*}
 
-The other problem, variable passing, requires autos to solve.  Clearly, this sometimes involves a cost to efficiency.  This is
-not as bad as it seems at first, however, because not all values need to be passed in an extensible way.  For example,
-any value that represents something bounded by a memory size can be represented with an natural-sized integer (that is,
-an integer whose size matches the hardware's pointer size).  Thus, any integer representing an array index or size or
-the like can be represented with an integer of default size.  If the architecture is extended to a larger pointer size,
-all the code must be recompiled anyway.  This represents most of the integers passed between functions.
+The other problem is variable passing, which requires autos to solve.  Clearly, this sometimes involves a cost to
+efficiency.  This is not as bad as it seems at first, however, because not all values need to be passed in an
+extensible way.  For example, any value that represents something bounded by a memory size can be represented with a
+natural-sized integer (that is, an integer whose size matches the hardware's pointer size -- Pit guarantees that
+the size of ``int'' will always match the size of a pointer).  Thus, any integer representing an array index or size or
+the like can be represented with an integer of natural size.  If the architecture is extended to a larger pointer size,
+for example with the recent 64-bit extensions to x86, all the code must be recompiled anyway.  This represents most of
+the integers passed between functions.
 
 On the other hand, consider an integer that represents an offset into a file.  A file's maximum size is dependent on
 the operating system.  In the not-so-distant past, file sizes were represented with a 32-bit variable, limiting files
@@ -207,10 +216,10 @@ drives occupying many large machine rooms could store only a fraction of 4GB.  T
 representing offsets into files, but it is unreasonable to rely on that being large enough forever, particularly with
 the proliferation of distributed storage systems such as RAID in the consumer market.  In fact, Sun Microsystems has
 already designed a filesystem called ZFS that supports files up to $2^{128}$ bytes in size, and as virtually no
-operating systems currently ship with system libraries that do not use a 64-bit integer for this, another painful
-transition is imminent for C programs.  Standard C libraries address this by using off\_t to represent file
+operating systems currently ship with system libraries that do not use a 64-bit integer for this, another transition
+is imminent.  Standard C libraries address this by using off\_t to represent file
 offsets.  While this allows the size to be increased without modifying the source code to a program, this is still
-unsatisfactory, as it requires the program to be recompiled when a 128-bit integer is required.  In particular, during
+unsatisfactory, as it requires the program to be recompiled.  In particular, during
 the transition period, the compilation generates different assembler code depending on whether the target operating
 system has switched to a 128-bit off\_t or is still using a 64-bit off\_t.  However, simply compiling two
 versions is infeasible, because other data types are likely to be in transition as well, each of which doubles
@@ -222,11 +231,12 @@ seeking to a new location in the file or representing the size of the whole file
 the maximum amount that can be read is bounded by memory, so a natural-sized integer is guaranteed to be sufficient
 when representing the amount read or written in a single call.  As it is relatively rare to refer to an absolute
 position in a file, communicating a file offset is equally rare.  As this is the only place the performance penalty of
-autos is only incurred with regard to file IO, the cost is negligable.
+autos is only incurred with regard to file IO, the cost is negligable.  Additionally, normally a task involving disk IO
+(particularly seeking) is bounded by the disk, not the CPU, and in these cases there will literally be no cost.
 
 \begin{figure*}[ht]
 	\begin{sourcestyle}
-		\begin{verbatimtab}[\sourcetabsize]int fseeko(FILE *stream, off_t offset, int whence);\end{verbatimtab}
+		\begin{verbatim}int fseeko(FILE *stream, off_t offset, int whence);\end{verbatim}
 	\end{sourcestyle}
 	\caption{This C function prototype is unportable because the size of off\_t will vary between operating systems.}
 	\label{intro_portability_proto.c}
@@ -234,10 +244,10 @@ autos is only incurred with regard to file IO, the cost is negligable.
 
 \begin{figure*}[ht]
 	\begin{sourcestyle}
-		\begin{verbatimtab}[\sourcetabsize]public function(in auto $file, in auto $offset, in char $whence) $seek prototype;\end{verbatimtab}
+		\begin{verbatim}public function(in auto $file, in auto $offset, in char $whence) $seek prototype;\end{verbatim}
 	\end{sourcestyle}
 	\caption{This Pit function prototype is portable because \$offset can be any size integer.  At run-time, the
-		system library will convert it to what the kernel requires.  If the conversion would truncates the
+		system library will convert it to what the kernel requires.  If the conversion would truncate the
 		value, the system library throws an exception back to the caller.  \$whence is simply the letter b,
 		h, or e, meaning the offset is relative to the ``beginning'', ``here'', or ``end''.  This way, the
 		the C preprocessor macros SEEK\_SET, SEEK\_CUR, and SEEK\_END are unnecessary.}
