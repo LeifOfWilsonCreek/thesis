@@ -377,10 +377,12 @@ Automatic module interfaces				& Y & N & Y \\
 \hline
 Namespaces						& Y & N & Y \\
 \hline
+Preprocessor						& N & Y & N \\
+\hline
 
 \underline{Language constructs} \\
 \hline
-Homogeneous arrays (strings)				& Y & Y & C \\
+Homogeneous arrays					& Y & Y & C \\
 \hline
 Heterogeneous arrays					& Y & N & Y \\
 \hline
@@ -399,7 +401,7 @@ Abstract data types					& Y & N & Y \\
 \hline
 Automated compilation					& Y & N & Y \\
 \hline
-Vector math						& Y & N & N \\
+Native vector math					& Y & N & N \\
 \hline
 Eval							& N & N & Y \\
 \hline
@@ -415,15 +417,16 @@ type, the memory for it and anything stored in it is allocated automatically, an
 is performed automatically.  If he declares a variable to be a primitive type, he must manually allocate and free
 memory the same way he would in C.
 
-\subsection{Automatic module interfaces}
+\subsection{Automatic module interfaces and preprocessors}
 
 In C, the programmer must meticulously create a header file for every module.  Typically, almost all the information in
 the header file is duplicated in the module's source file.  All of this duplicated information could be generated
 automatically (some languages, such as Ada, do this), and therefore almost all of the time programmers spend maintaining
 header files for C modules is wasted.
 
-Perl has an unusual approach.  When a module is imported, it is literally executed.  However, the net effect is that
-it supports modules in a conventional sense, but does not require separate interface files.
+Perl has an unusual approach.  When a module is imported, it is literally executed.  This is because Perl code is
+compiled at run-time, and declaration statements are ``executed''.  In any case, the net effect is that it supports
+modules in a conventional sense, but does not require separate interface files.
 
 Pit takes an approach similar to Ada; when a module is compiled, the compiler generates both the object file containing
 machine code and an interface file for the module.  The contents of the interface file function the same way as a C
@@ -438,16 +441,16 @@ as M4 or C's preprocessor can be used for this purpose.
 \subsection{Namespaces}
 
 C simply does not support namespaces.  Perl supports namespaces in the form of ``packages'', but they are implemented
-in an ususual way.  Pits support namespaces well, including support for declaring ``private'' symbols that are only
+in an ususual way.  Pit supports namespaces well, including support for declaring ``private'' symbols that are only
 visible inside the namespace and ``public'' symbols that are visible everywhere.  Symbol names must be prefixed with
 the name of their namespace except when they are referred to within their own namespace.  Pit implicitly declares a
 namespace for each module with the name of the file it is contained in.  This allows the linker to find module
 dependencies without explicitly naming which modules should be linked in.  Many other languages support similar
 functionality.
 
-\subsection{Homogeneous arrays (strings)}
+\subsection{Homogeneous arrays}
 
-C supports homogeneous arrays of any type, including ``char'', which is used to build strings of text.  Perl supports a
+C supports homogeneous arrays of any type, including ``char'', which is used to build strings of text.  Perl supports
 text strings, but no other homogeneous array type.  Individual characters cannot be extracted from Perl strings except
 through disproportionally expensive operations (in terms of both programmer and CPU time).  In Pit, a ``string'' is any
 homogeneous array.  To differentiate between homogeneous and heterogeneous arrays, the former is a string and the
@@ -457,8 +460,11 @@ string is equivalent to an array in C parlance.
 \subsection{Heterogeneous arrays}
 
 In Perl parlance, arrays are heterogeneous.  Except for indivisible sequences of 8-bit characters, there is no support
-for homogeneous arrays.  C does not support heterogeneous arrays.  In Pit, autos can store heterogeneous arrays or
-strings of integers (but not strings of other types).
+for homogeneous arrays.  In contrast, C does not support heterogeneous arrays.  Pit's autos can store heterogeneous
+arrays or strings of integers (but not strings of other types).  Converting between strings and arrays is as easy as
+assigning one to the other, however if an array is assigned to a string and there is an element of the wrong type or
+the string is too small, an exception is raised.  If the string is too large, the extra elements are assigned a null
+value depending on the type (zero for integers).
 
 \subsection{Structs and Hashes}
 
@@ -468,63 +474,93 @@ nearly the same thing:  A set of names mapped to a set of values.  The primary d
 struct are static, while elements of a hash can be added or deleted at runtime.  In Pit, autos cannot store structs;
 instead, a struct can be approximated with a hash.  Primitive variables can be declared with the struct type.
 
+There is a difference worth noting between hashes in Perl and Pit.  In Perl, hash elements are unordered, while in Pit,
+hash elements maintain the order in which they were inserted.  (This does not make it behave like a B-tree, as the
+elements are never sorted; they are only appended to the end of the list.)  This additional information can be useful
+and comes at no cost.  The elements of a hash are used to form a doubly-linked list, and inserting a new element
+appends to the list.  The hash table still allows quick access to elements in the middle of the list.  All the
+operations on a hash still have the same time complexity in Pit as in Perl.
+
 \subsection{Inline assembly}
 
-In low-level programming, it is often unavoidable to use inline assembly code, however undesirable it may be, for
-interaction with hardware, manually optimizing code, switching tasks or managing memory paging in an operatin system,
-etc.  Pit's interface to assembly code is nearly identical to GCC's interface.
+In low-level programming, it is often unavoidable to use inline assembly code (however undesirable it may be) for
+interaction with hardware, manually optimizing code, switching tasks or managing memory paging in an operating system,
+etc.  Pit's interface to assembly code is similar to GCC's interface.
 
 \subsection{Exceptions}
 
 Fundamentally, an ``exception'' is a branch that can exit several functions simultaneously, usually used for error
-handling; in most languages, exceptions have additional features that significantly improve their usability, but this
-is the basic meaning.  The best that C has to offer are the functions setjmp and longjmp.  These are quite clumsy, as
-they have no mechanism for allowing intermediate functions to clean up if an exception occurs.
+handling.  In most languages, exceptions have additional features that significantly improve their usability, but this
+is the basic meaning.  The best that C has to offer are the setjmp and longjmp symbols.  These are quite clumsy, as
+they have no mechanism for allowing intermediate functions to clean up when an exception occurs, and they require a
+storage variable to be manually passed to functions that may throw the exception.
 
 Perl supports exceptions also, but its support is clumsy in a different way; error messages in Perl are always in the
-form of user-friendly strings, for example, "No such file or directory".  This means that the only way for a program to
-trap a particular error is to match the user-friendly string.  If the string changes, for example because the user
+form of user-friendly strings, for example, ``No such file or directory''.  This means that the only way for a program
+to trap a particular error is to match the user-friendly string.  If the string changes, for example because the user
 speaks a different language or uses a different operating system, the trap for that particular error breaks.  Good
 support must provide a way to report a dependable identifier for an error, a way to map that identifier to a
 user-friendly message, and a way for intermediate functions to clean up their workspace when an exception occurs.
 
-% \subsection{Abstract data types}
+\subsection{Abstract data types}
 
-% XXX: more work
+Pit uses autos to support abstract data types.  However, this discussion is too lengthy for this paper.
 
 \subsection{Automated compilation}
 
-When compiling a C program, the programmer must somehow describe each command required.  Each module of the
+When compiling a C program, the programmer must somehow describe each command to execute.  Each module of the
 program must be compiled explicitly.  Then the modules must be linked with the necessary libraries explicitly
 to produce the final executable file.  Additionally, for each module and library, a separate interface
 description (``header file'' in C-specific terminology) must be maintained.  While tools such as \emph{make}
 ease this process, it is still a complex process that the programmer must design carefully.
 
 When compiling a Perl program, compilation starts with the main module.  When another module or library is
-required, the compiler is told the name of the library so it can find it in the filesystem.  Not only does
+required, the compiler is told the name of the library with the ``use'' statement so it can find it in the filesystem.  Not only does
 this ease the compilation process, but it makes it easier to move the process to other systems where the
 filesystem's hierarchy is different because the \emph{compiler} rather than files shipped with the source
 code decides where to find dependencies.
 
-As with Perl, each symbol in a Pit program belongs to a ``namespace''.  Namespaces may be nested within a
+As with Perl, each symbol in a Pit program belongs to a namespace.  Namespaces may be nested within a
 module, and each module implicitly defines a namespace defined by the filename of the module and the
 subdirectory (if any) under which it resides in the main library directory.  Obviously
 namespaces provide a separation between symbol names, preventing two or more modules from accidentally
 defining conflicting symbol names, but this scheme also allows the linker to automatically find dependencies.
-For example, if the main module imports a library called ``helper'', the compiler finds the interface file for
+For example, if the main module imports a library called ``helper'' (with the ``import'' statement), the compiler finds the interface file for
 this library called ``helper.pi'' and reads the exported symbol prototypes from it.  All of the symbol
 names in that library are prefixed with the word ``helper'' and a period.  Because of the prefix, when
 the module is linked, the linker automatically looks for a file called ``helper.o'', ``helper.a'', etc
 in the current directory and in the library search path.
 
 While other steps may be necessary to compile or install the program, the basic compilation process is
-automated.  Also, interface files are generated automatically instead of maintained manually.  These are
-clear advantages over C.
+automated.
 
-% \subsection{Vector math}
+\subsection{Native vector math}
 
-% XXX: more work
+Arithmetic operations on arrays perform a reasonable vector operation when appropriate.  For example, adding two
+strings together produces a third string where each element is the sum of the elements in the same position in the
+input strings.  Assigning one string to another copies the values as if each individual element were assigned.
+Adding a scalar to an array adds the scalar to each element in the array.  Multiplication and the other arithmetic
+operators work the same as addition.  The benefit of this, besides easy vector math, is that the compiler can easily
+optimize these operations for the target architecture using the CPU's vector math instructions.
 
-% \subsection{Eval}
+Unlike C, Pit does not use the name of a string to represent a pointer to the string (rather, it uses the reference
+operator just like with any other variable).  This alleviates the ambiguity as to whether adding two strings means
+adding their addresses or adding their elements.  To do the former, the reference operator is used to get their
+addresses, which are then added.
 
-% XXX: more work
+\subsection{Eval}
+
+XXX: this is a clumsy section.  I'll do more work on it...  Or maybe I should just drop it?
+
+As a compiled language, dynamic code evaluation is difficult, at best.  While it may be possible to add this later,
+there has been no designing or work done to this end.  There is nothing about the language that precludes an
+implementation of an eval statement; this difficulty is only a problem because the compiler for this language generates
+stand-alone machine code.
+
+It may be desirable to create a compiler that translates Pit code into a byte-code that is suitable for a virtual
+machine.  Programs that use autos heavily may translate better into this byte-code because the operations on autos can
+be handled with native machine code rather than entirely in the emulator.  This implementation would be similar to the
+virtual machine implemented by Perl.  As this virtual machine could easily implement a dynamic symbol table, it may be
+significantly easier to implement eval in this context.  However, this project could easily turn into an implementation
+of an incompatible (although similar) language.  Such a language would have value in high-level applications, but not
+to low-level programming.
