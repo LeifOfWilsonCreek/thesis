@@ -34,7 +34,7 @@ is possible because primitives can be used to construct the infrastructure requi
 
 Pit is targeted at making low-level code more secure, portable, and maintainable.  It includes support for in-line
 assembly code to facilitate system programming, and it is well-suited for anything C is well-suited for, including
-kernels, system libraries, supporting software, network daemons, etc.  However, the inclusion of autos drastically
+kernels, the system library, supporting software, network daemons, etc.  However, the inclusion of autos drastically
 reduces the amount of code required for most programs.
 
 
@@ -86,8 +86,8 @@ because they don't have to audit the other code for these bugs and because the o
 write initially.  Effective use of Pit requires a programmer to be willing to accept this trade-off and use it to his advantage.
 Most of the existing research for detecting security errors in C code or aborting a C program when a buffer overrun
 occurs are easy to adapt to Pit's.  Such an adaptation should typically ignore autos (or assume they have no such
-security errors) and do the security checking only on primitive variables.  (XXX:  Add citations to the security
-papers I found.)
+security errors) and do the security checking only on primitive variables.
+% XXX:  Add citations to the security papers I found.
 
 \subsection{C Comparison}
 
@@ -147,8 +147,8 @@ to allow it to be easily compiled on FreeBSD.  This is used to create pre-compil
 quickly by end-users.  NetBSD and OpenBSD, as well as several distributions of Linux, have similiar facilities for
 installing common software.  These projects represent an enormous amount of ongoing maintenance, as each port must be
 individually updated whenever original author releases a new version and because these systems frequently break as a
-result of trivial differences in C libraries between systems.  This often introduces an undesirably long delay before
-users can run new versions of their favorite software.
+result of trivial differences in the C system library between systems.  This often introduces an undesirably long delay
+before users can run new versions of their favorite software.
 
 Unfortunately, the availability of such a porting system has become a major consideration
 when choosing an operating system.  Otherwise superior operating system distributions may be abandoned simply because
@@ -159,9 +159,10 @@ for Linux software, but to use this, a Linux version of every shared library mus
 available for FreeBSD at all, except by using an executable compiled for Linux under this compatiblity layer.
 
 While compiled code obviously cannot be portable between hardware architectures, it is not impractical to make object
-files portable between operating systems on the same architecture.  To do so, the system libraries need to provide a consistent interface to the
-operating system, as seen by object files, not just as seen by source code.  (Here, interface means a set of function
-prototypes and global variables.)  This interface must be extensible in a way that remains back-compatible at the level of machine-code.
+files portable between operating systems on the same architecture.  To do so, the system library needs to provide a
+consistent interface to the operating system, as seen by object files, not just as seen by source code.  (Here,
+interface means a set of function prototypes and global variables.)  This interface must be extensible in a way that
+remains back-compatible at the level of machine-code.
 
 The goal is to translate any application into object files just once for each hardware architecture, then distribute
 the object files to all operating systems for that hardware architecture.  During installation, the program is linked
@@ -170,8 +171,8 @@ the locations of files in the filesystem, this will substantially mitigate the a
 System-specific configuration issues such as paths can be abstracted into variables in a small separate module that is
 compiled at installation time.  Typically, installation should entail downloading the distributed software, compiling a
 trivial module containing configuration values determined at install-time, linking the distributed object files with
-the configuration module and system libraries, and copying the executable and auxiliary files into appropriate
-locations in the filesystem.
+the configuration module, system library, and third-party libraries, and copying the executable and auxiliary files
+into appropriate locations in the filesystem.
 
 In C, the number of times a program must be compiled can be described as the product n*m, where n is the number of
 hardware architectures and m is the number of operating systems.  If object files are portable, this is reduced to n,
@@ -186,7 +187,7 @@ points must be considered:
 
 \begin{itemize}
 \item
-	The system libraries cannot define preprocessor macros that are used in the application's modules, as the contents of
+	The system library cannot define preprocessor macros that are used in the application's modules, as the contents of
 	these macros are almost certain to change.  This is generally not a significant issue as Pit does not require a
 	preprocessor.
 \item
@@ -280,8 +281,8 @@ to 4GB.  At the time this was decided, it was wasteful to use larger values, as 
 disks occupying many large machine rooms could store only a fraction of 4GB.  Today, we use a 64-bit value for
 representing offsets into files, but it is unreasonable to rely on that being large enough forever, particularly with
 the proliferation of distributed storage systems such as RAID in the consumer market.  In fact, Sun Microsystems has
-already designed a filesystem called ZFS that supports files up to $2^{128}$ bytes in size (XXX: citation?), and as very few
-operating systems currently ship with system libraries that do not use a 64-bit integer for this, another transition
+already designed a filesystem called ZFS that supports files up to $2^{128}$ bytes in size, and as very few
+operating systems currently ship with a system library that does not use a 64-bit integer for this, another transition
 is imminent (although it may be a long time away, the example is still valid).  Standard C libraries address this by using off\_t to represent file
 offsets.  While this allows the size to be increased without modifying the source code to a program, this is still
 unsatisfactory, because it requires the compilation to generate different assembler code depending on whether the target operating
@@ -292,7 +293,7 @@ compiled code entirely (Figure \ref{intro_portability_proto.p}).  An auto can re
 particular size; the amount of memory allocated will always be sufficient to represent the number.
 
 While this reduces efficiently a little, file storage is one of probably very few commonly-used places that autos are
-needed for storing simple integers when communicating with system libraries, and then only when
+needed for storing simple integers when communicating with the system library, and then only when
 seeking to a new location in the file or representing the size of the whole file.  When reading or writing the file,
 the maximum amount that can be read is bounded by memory, so a naturally-sized integer is guaranteed to be sufficient
 when representing the amount read or written in a single call.  As it is usually rare to refer to an absolute
@@ -302,8 +303,8 @@ autos is incurred with regard to file IO, the cost is negligable.  Additionally,
 
 Furthermore, when efficiency matters more than limits on the file size, the integers may be represented as primitives
 everywhere except where the parameter is passed.  For example, there is probably no compelling reason for the system
-libraries to use autos after receiving the parameter in the function call (because all filesystem implementations have
-a maximum file size known by the operating system and because the internals of the system libraries may easily be
+library to use autos after receiving the parameter in the function call (because all filesystem implementations have
+a maximum file size known by the operating system and because the internals of the system library may easily be
 changed without changing the API), and for situations where the file is guaranteed to be smaller than
 4GB because of some other bounding factor, the caller may use primitive 32-bit integers to represent the file offsets.
 In this case, the compiler will automatically promote the primitive integer to auto when setting up the parameters to
@@ -550,12 +551,27 @@ addresses, which are then added.
 
 \subsection{Eval}
 
-XXX: this is a clumsy section.  I'll do more work on it...  Or maybe I should just drop it?
-
 As a compiled language, dynamic code evaluation is difficult, at best.  While it may be possible to add this later,
-there has been no designing or work done to this end.  There is nothing about the language that precludes an
-implementation of an eval statement; this difficulty is only a problem because the compiler for this language generates
+there has been no designing or work done to this end.  There is nothing about the language itself that precludes
+implementing an eval statement; this difficulty is only a problem because the compiler for this language generates
 stand-alone machine code.
+
+Parsing code on the fly is easy; all this requires is making a ``compiler library'' that contains most of the logic of
+the compiler's phases -- for example, parsing, optimizing, and interpreting or code generation.  Then when an eval
+statement is encountered, calls to the compiler library are inserted.  In fact, such a design could in theory allow the
+caller to manipulate the parse tree between the parse and interpretation phases.  The difficulty arises when resolving
+symbol names that refer to symbols outside the eval.  Not only does the compiler need to construct a lookup mechanism
+for local variable names, but somehow the linker needs to know that it must not drop unused symbols.  The run-time
+environment also needs a way to dynamically load new libraries.  While some of this may be easy when the operating
+system's dynamic linker is available, depending on it would exclude statically linked executables.  Simply loading a
+new copy of the library at run-time will not work, because global symbols in the second copy would be distinct; the
+desired behavior is that if a library is referenced by both the eval statement and the compiled executable, the global
+symbols in that library are shared.
+
+For now, Pit does not implement any form of an eval statement.  However, this possibility is open for future
+development.
+
+\section{Future Work}
 
 It may be desirable to create a compiler that translates Pit code into a byte-code that is suitable for a virtual
 machine.  Programs that use autos heavily may translate better into this byte-code because the operations on autos can
@@ -564,3 +580,10 @@ virtual machine implemented by Perl.  As this virtual machine could easily imple
 significantly easier to implement eval in this context.  However, this project could easily turn into an implementation
 of an incompatible (although similar) language.  Such a language would have value in high-level applications, but not
 to low-level programming.
+
+Ultimately, the goal is to use Pit to write a compiler in Pit, thus demonstrating its ability to be self-hosting.  The
+current compiler is a quick and dirty job, written with the expectation that an elegent compiler will be implemented
+using Pit.  Currently, development is focused on creating a language library to implement the function calls required
+by operations on autos and a system library that wraps libc.  (While Pit's system library would ideally make system
+calls directly, wrapping libc initially allows Pit programs to be installed on systems that don't provide a native Pit
+system library.)  After these libraries are finished, the ``real'' compiler can finally be rewritten in Pit.
