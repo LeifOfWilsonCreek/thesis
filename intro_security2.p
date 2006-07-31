@@ -7,12 +7,19 @@ public function(out int $exit_status) $.main = {
 	private auto $nums;
 
 	loop: {
-		// Pit strings are _not_ null-terminated.  $in_len is an in-out parameter.
-		// Going in it's the maximum length of $in and coming out it's the actual
-		// length of $in.
+		// Pit strings are _not_ null-
+		// terminated.  $in_len is an in-out
+		// parameter.  Going in it's the
+		// maximum length of $in and coming out
+		// it's the actual length of $in.
 		$in_len = sizeof($in);
-		$io.stdin=>readline_p($in, $in_len);  // _p means primitive
-		unless($in_len) break;  // readline_p modified $in_len
+
+		// _p means primitive.  => is the
+		// method-call operator.
+		$io.stdin=>readline_p($in, $in_len);
+
+		// readline_p modified $in_len
+		unless($in_len) break;
 
 		$string.split($in, " ", $nums);
 

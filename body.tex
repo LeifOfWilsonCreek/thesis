@@ -47,27 +47,26 @@ write initially.  Effective use of Pit requires a programmer to be willing to ac
 Most of the existing research for detecting security errors in C code or aborting a C program when a buffer overrun
 occurs are easy to adapt to Pit's.  Such an adaptation should typically ignore autos (or assume they have no such
 security errors) and do the security checking only on primitive variables.
-% XXX:  Add citations to the security papers I found.
 
 \subsection{C Comparison}
 
-\begin{figure*}[ht]
+\begin{figure}[htb]
 	\sourceinput{intro_security.c}
 	\caption{Example program in C}
 	\label{intro_security.c}
-\end{figure*}
+\end{figure}
 
-\begin{figure*}[ht]
+\begin{figure}[htb]
 	\sourceinput{intro_security.p}
 	\caption{Figure \ref{intro_security.c}, rewritten in Pit}
 	\label{intro_security.p}
-\end{figure*}
+\end{figure}
 
-\begin{figure*}[ht]
+\begin{figure}[htb]
 	\sourceinput{intro_security2.p}
 	\caption{Figure \ref{intro_security.c}, with some speed optimizations}
 	\label{intro_security2.p}
-\end{figure*}
+\end{figure}
 
 Figure \ref{intro_security.c} shows a C program that adds pairs of numbers read from standard input.  Figure
 \ref{intro_security.p} shows the same program written in Pit.  Notice that in Pit, autos can manage all the array sizes
@@ -155,17 +154,17 @@ points must be considered:
 	importantly, this includes integers and structs.
 \end{itemize}
 
-\begin{figure*}[ht]
+\begin{figure}[htb]
 	\begin{sourcestyle}
 		\begin{verbatimtab}[\sourcetabsize]
-#define EMIT_FOO_FLAG(a) ((a) & 0x4 ? puts("True") : puts("False"))
-		\end{verbatimtab}
+#define EMIT_FOO_FLAG(a) \
+	((a) & 0x4 ? puts("True") : puts("False"))\end{verbatimtab}
 	\end{sourcestyle}
 	\caption{A preprocessor macro for a C library that causes dependent programs to lose portability when translated into an object files}
 	\label{intro_portability_preproc.c}
-\end{figure*}
+\end{figure}
 
-\begin{figure*}[ht]
+\begin{figure}[htb]
 	\begin{sourcestyle}
 		\begin{verbatimtab}[\sourcetabsize]
 int emit_foo_flag(a) {
@@ -173,12 +172,11 @@ int emit_foo_flag(a) {
 		return puts("True");
 	else
 		return puts("False");
-}
-		\end{verbatimtab}
+}\end{verbatimtab}
 	\end{sourcestyle}
 	\caption{A C function that does not have the difficulty described in Figure \ref{intro_portability_preproc.c}}
 	\label{intro_portability_preproc.p}
-\end{figure*}
+\end{figure}
 
 C's preprocessor carries much blame for our problems with binary portability.  In C, a library can declare macros that
 get resolved when the calling module is compiled, and later, a new version of this library may change the contents of
@@ -200,17 +198,20 @@ automatically by Pit's compiler, and the language includes an ``import'' stateme
 one if desired.  As long as the effects of each preprocessor definition are confined to the module they are defined in,
 there will be no adverse affect to portability.
 
-\begin{figure*}[ht]
+\begin{figure}[htb]
 	\begin{sourcestyle}
-		\begin{verbatim}int fseeko(FILE *stream, off_t offset, int whence);\end{verbatim}
+		\begin{verbatimtab}[\sourcetabsize]
+int fseeko(FILE *stream, off_t offset, int whence);\end{verbatimtab}
 	\end{sourcestyle}
 	\caption{This C function prototype is unportable after translation because the size of off\_t will vary between operating systems.}
 	\label{intro_portability_proto.c}
-\end{figure*}
+\end{figure}
 
-\begin{figure*}[ht]
+\begin{figure}[htb]
 	\begin{sourcestyle}
-		\begin{verbatim}public function(in auto $file, in auto $offset, in char $whence) $seek prototype;\end{verbatim}
+		\begin{verbatimtab}[\sourcetabsize]
+public function(in auto $file, in auto $offset,
+	in char $whence) $seek prototype;\end{verbatimtab}
 	\end{sourcestyle}
 	\caption{This Pit function prototype is portable because \$offset can be any size integer.  At run-time, the
 		system library will convert it to what the kernel requires.  If the conversion would truncate the
@@ -218,7 +219,7 @@ there will be no adverse affect to portability.
 		h, or e, meaning the offset is relative to the ``beginning'', ``here'', or ``end''.  This way, the
 		the C preprocessor macros SEEK\_SET, SEEK\_CUR, and SEEK\_END are unnecessary.}
 	\label{intro_portability_proto.p}
-\end{figure*}
+\end{figure}
 
 The other problem is passing variables, which requires autos to solve.  If a parameter to a function is represented as
 an auto, it can be extended without recompiling existing code.  For example, rather than representing the offset into a
@@ -276,20 +277,25 @@ represented as an auto, the interface remains portable.
 In short, while there is some cost to using autos to pass integers to libraries, the cost can be minimized to a point
 where it is negligable in almost all cases.
 
-\begin{figure*}[ht]
+\begin{figure}[htb]
 	\sourceinput{intro_portability_network.c}
 	\caption{A C program for connecting to the local system on port 22 and reading one packet.}
 	\label{intro_portability_network.c}
-\end{figure*}
-\begin{figure*}[ht]
+\end{figure}
+\begin{figure}[htb]
 	\sourceinput{intro_portability_network.p}
 	\caption{
 		An equivalent Pit program.  In Pit, the error handling may be omitted, as Pit uses exceptions for reporting unhandled
 		errors gracefully.  A hash is a robust and simple way to pass all the necessary parameters in one call.  Notice that
-		unlike a struct, the order of the elements in the hash does not matter, improving portability.
+		unlike a struct, the order of the elements in the hash does not matter, improving portability.  All the parameters
+		passed in the previous C example can be combined into a single hash, greatly simplifying the library interface.  Also,
+		either the integer 0x7f000001 or the string "127.0.0.1" may be specified as an IP address, because the library can
+		tell which it is and do the required conversion.  As should have been done in C's libraries, endian conversions for
+		port and network numbers are always done by the library -- so there's no htons().  We don't need to initialize any
+		unused values because a hash keeps track of which values are initialized.
 	}
 	\label{intro_portability_network.p}
-\end{figure*}
+\end{figure}
 
 The final major difficulty with passing parameters to system library calls in an extensible way is the inflexiblity of
 structs.  To be portable, a struct must always have exactly the same format, meaning it must contain the same elements
@@ -322,7 +328,7 @@ should be portable between operating systems on the same architecture.
 
 \section{Comparison to Other Languages}
 
-\begin{figure*}[ht]
+\begin{figure}[htb]
 \begin{tabular}{ | l || c | c | c | }
 \hline
 \bf{Feature}						& \bf{Pit} & \bf{C} & \bf{Perl} \\
@@ -332,7 +338,7 @@ should be portable between operating systems on the same architecture.
 \hline
 Manual memory allocation				& Y & Y & N \\
 \hline
-Automatic memory allocation and garbage collection	& Y & N & Y \\
+Automatic memory allocation \& GC			& Y & N & Y \\
 \hline
 Automatic module interfaces				& Y & N & Y \\
 \hline
@@ -369,7 +375,7 @@ Eval							& N & N & Y \\
 \end{tabular}
 
 Yes, No, Clumsy, Not Applicable
-\end{figure*}
+\end{figure}
 
 \subsection{Manual and automatic memory allocation}
 
