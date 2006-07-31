@@ -27,28 +27,30 @@ Many of these approaches represent significant improvements.
 The methods above that do not require code modification can only detect an attack in progress and abort the program;
 they do not fix the underlying problem that there is a bug in the software.  Detection is a big improvement, and in
 most programs, this is a ``safe'' thing to do; although the program behaves in an undesirable way, disaster is averted.
-In many cases, however, a program aborting is very dangerous.  For example, a trapped buffer overrun bug in a kernel
+In many cases, however, aborting a program is very dangerous.  For example, a trapped buffer overrun bug in a kernel
 will still crash the computer, resulting in down-time and lost data.  A trapped bug in a database server can cause
 equally catastrophic results.  Worse, an attacker may still exploit any such bug to deliberately keep a service
 off-line.  While security is not compromised (meaning that sensitive data is not revealed and the attacker has gained
 no control over the program), the solution is still not good enough.  The real problem is that there is no way to
-automatically extend buffers without modifying existing code.
+actually fix the bug without modifying existing code.
 
 Some solutions deal with buffer overruns in better ways, providing a means for a robust recovery or automatically
 allocating memory so there are no buffer overrun bugs.  These solutions require modification to the source code.  Most
 are designed with the intent that old code can be retrofitted with these changes, and thus stay as close as possible to
 C.  When ensuring security on an existing C program, this may be a good solution, as it is likely to be easier than
-rewriting the project in a completely new language.
+rewriting the project in a completely new language.  However, these solutions do not protect against other types of
+bugs, and they do not improve the quality of the code.  Rather, they tend to obfuscate the code even further by adding
+hints or extra information for the compiler.
 
 None of these solutions address non-control-data attacks\cite{chen2005} or integer overflow bugs.  Protecting against
 these is an issue concerned more with code correctness than simple type safety.  A language that provides abstraction
-for memory allocation will help prevent bugs such as the double-free error.  Allocating more memory for integers
-instead of overflowing will prevent integer overflow errors.  As better deterrents to buffer overrun attacks are
-developed, attackers will inevidably focus more on attacking these weaknesses.  We also know intuitively that if the
-language can simplify our code, there will usually be fewer bugs of all types.
+for memory allocation will help prevent other memory-related bugs such as the double-free error and will reduce the
+number of unrelated bugs by simplifying the code and making bugs easier to notice.  Allocating memory automatically for
+integers will prevent integer overflow errors.  As better deterrents to buffer overrun attacks are developed, attackers
+will inevidably focus more on attacking these weaknesses.
 
 Pit allows a new approach for new code.  It is not meant as a solution for fixing old code, but rather as a better
 language for writing new code.  Automatically translating a program from C into Pit in a way that takes advantage of
 Pit's new features is likely to be impossible.  However, when writing new code, Pit provides a clear advantage.  Autos
-provide guaranteed protection against these bugs and simplify code substantially, yet when performance is more
-important than security, primitives are still available.
+provide guaranteed protection against memory and overflow bugs and simplify code substantially, yet when performance is
+more important than security, primitives are still available.

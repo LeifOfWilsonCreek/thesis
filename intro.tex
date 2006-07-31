@@ -553,7 +553,7 @@ addresses, which are then added.
 
 As a compiled language, dynamic code evaluation is difficult, at best.  While it may be possible to add this later,
 there has been no designing or work done to this end.  There is nothing about the language itself that precludes
-implementing an eval statement; this difficulty is only a problem because the compiler for this language generates
+implementing an eval statement.  This difficulty is only a problem because the compiler for this language generates
 stand-alone machine code.
 
 Parsing code on the fly is easy; all this requires is making a ``compiler library'' that contains most of the logic of
@@ -574,16 +574,29 @@ development.
 \section{Future Work}
 
 It may be desirable to create a compiler that translates Pit code into a byte-code that is suitable for a virtual
-machine.  Programs that use autos heavily may translate better into this byte-code because the operations on autos can
-be handled with native machine code rather than entirely in the emulator.  This implementation would be similar to the
-virtual machine implemented by Perl.  As this virtual machine could easily implement a dynamic symbol table, it may be
-significantly easier to implement eval in this context.  However, this project could easily turn into an implementation
-of an incompatible (although similar) language.  Such a language would have value in high-level applications, but not
-to low-level programming.
+machine.  Like Java, this would allow programs to be portable between architectures.  Programs that use autos heavily
+may run faster than programs that primarily use primitive variables when translated into this bytecode, because the
+operations on autos can be handled with native machine code rather than entirely in the emulator.  It may be desirable
+to restrict programs to use only autos to simplify the virtual machine.  One approach may be to implement parse and
+execute statements (which together represent an eval statement) in the compiled language (assuming the difficulties
+described previously are overcome), and export the parse tree as the ``bytecode'' that a virtual machine can execute.
+It is likely that programs written for execution in a virtual machine will perform poorly when compiled to native
+machine code, and vice versa, but there are positive aspects to using the same language for both environments.
 
 Ultimately, the goal is to use Pit to write a compiler in Pit, thus demonstrating its ability to be self-hosting.  The
 current compiler is a quick and dirty job, written with the expectation that an elegent compiler will be implemented
 using Pit.  Currently, development is focused on creating a language library to implement the function calls required
 by operations on autos and a system library that wraps libc.  (While Pit's system library would ideally make system
-calls directly, wrapping libc initially allows Pit programs to be installed on systems that don't provide a native Pit
-system library.)  After these libraries are finished, the ``real'' compiler can finally be rewritten in Pit.
+calls directly, providing a wrapper for libc allows Pit programs to be executed on systems that don't provide a native
+Pit system library.  This allows Pit programs to be portable to nearly all Unix systems immediately.)  After these
+libraries are finished, the ``real'' compiler can finally be rewritten in Pit.
+
+Before meaningful benchmarks can be produced, much work must be done in the area of optimization.  All of the
+optimization techniques used by C compilers should be useful in Pit.  There are additional Pit-specific optimizations,
+because a good compiler should find many places where a primitive variable can be substituted for an auto.  When this
+substitution is possible, the programmer gains all the benefits of auto variables with no performance penalty.
+
+It is reasonable to expect Pit programs that use only primitive variables to match the speed of C programs when using a
+compiler of equal quality.  When a Perl program executes, it is compiled to a bytecode, then executed in a virtual
+machine.  Pit programs (even those that use only auto variables) should execute significantly faster than Perl programs
+both because the code is not compiled at run-time and because there is no virtual machine layer.
