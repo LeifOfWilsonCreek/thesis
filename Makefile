@@ -1,4 +1,4 @@
-all: MAIN.dvi MAIN.ps MAIN.pdf view
+all: MAIN.dvi MAIN.ps MAIN.pdf
 
 MAIN.dvi: Makefile *.tex *.bib
 	make clean
