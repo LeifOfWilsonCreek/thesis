@@ -22,4 +22,6 @@ view: MAIN.dvi
 	xdvi -geom -0-0 MAIN &
 
 clean:
-	rm -f MAIN.aux MAIN.log MAIN.bbl MAIN.blg MAIN.out
+	rm -f MAIN.aux MAIN.log MAIN.bbl MAIN.blg MAIN.out MAIN.dvi
+	rm -f MAIN.ps
+	rm -f MAIN.pdf
