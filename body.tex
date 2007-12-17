@@ -51,42 +51,42 @@ security errors) and do the security checking only on primitive variables.
 \subsection{C Comparison}
 
 \begin{figure}[htb]
-	\sourceinput{intro_security.c}
+	\sourceinput{example_security.c}
 	\caption{Example program in C}
-	\label{intro_security.c}
+	\label{example_security.c}
 \end{figure}
 
 \begin{figure}[htb]
-	\sourceinput{intro_security.p}
-	\caption{Figure \ref{intro_security.c}, rewritten in Pit}
-	\label{intro_security.p}
+	\sourceinput{example_security.p}
+	\caption{Figure \ref{example_security.c}, rewritten in Pit}
+	\label{example_security.p}
 \end{figure}
 
 \begin{figure}[htb]
-	\sourceinput{intro_security2.p}
-	\caption{Figure \ref{intro_security.c}, with some speed optimizations}
-	\label{intro_security2.p}
+	\sourceinput{example_security2.p}
+	\caption{Figure \ref{example_security.c}, with some speed optimizations}
+	\label{example_security2.p}
 \end{figure}
 
-Figure \ref{intro_security.c} shows a C program that adds pairs of numbers read from standard input.  Figure
-\ref{intro_security.p} shows the same program written in Pit.  Notice that in Pit, autos can manage all the array sizes
+Figure \ref{example_security.c} shows a C program that adds pairs of numbers read from standard input.  Figure
+\ref{example_security.p} shows the same program written in Pit.  Notice that in Pit, autos can manage all the array sizes
 and memory allocation for us, thus eliminating any potential for mismanaged string buffers.  As shown in Figure
-\ref{intro_security2.p}, they can also be managed manually just as easily as in C, with the same risk to
+\ref{example_security2.p}, they can also be managed manually just as easily as in C, with the same risk to
 security.  This is the trade-off between improving efficiency and improving security and maintainability.
 
-While figure \ref{intro_security.c} clearly has no buffer overflow vulnerabilities, there are several ways they could
+While figure \ref{example_security.c} clearly has no buffer overflow vulnerabilities, there are several ways they could
 easily be introduced either when the code is modified or as a simple miscalculation when writing it in the first place.
 For example, the wrong size could be passed to fgets(), a pointer error could be introduced where the string is parsed
 with strsep(), or an error could be introduced in the format string passed to printf.  Also notice that we had to set
 an arbitrary limit on the length of an input line, and while it is obviously possible to work around this, doing so
 makes the program much more complex and adds more opportunities for security holes.
 
-Figure \ref{intro_security.p} shows the same program, this time written in Pit using autos.  Notice that neither the
+Figure \ref{example_security.p} shows the same program, this time written in Pit using autos.  Notice that neither the
 length of a string nor a pointer into the string are ever used, and the bounds on any indexing operations for autos are
 checked at run-time.  All the sizes calculated automatically because memory is managed automatically.  This means the
-opportunities for security holes that were present in Figure \ref{intro_security.c} are eliminated.
+opportunities for security holes that were present in Figure \ref{example_security.c} are eliminated.
 
-As an example of how to trade security for efficiency, Figure \ref{intro_security2.p} shows the same program written in
+As an example of how to trade security for efficiency, Figure \ref{example_security2.p} shows the same program written in
 Pit, this time using some primitives.  Although autos weren't completely eliminated here, they could be.  In
 particular, \$in is implicitly converted to an auto when passed to \$string.split, and \$nums remains an auto.  Notice
 how easily primitives and autos can work together, allowing the programmer to choose precisely what code to optimize
@@ -161,7 +161,7 @@ points must be considered:
 	((a) & 0x4 ? puts("True") : puts("False"))\end{verbatimtab}
 	\end{sourcestyle}
 	\caption{A preprocessor macro for a C library that causes dependent programs to lose portability when translated into an object files}
-	\label{intro_portability_preproc.c}
+	\label{example_portability_preproc.c}
 \end{figure}
 
 \begin{figure}[htb]
@@ -174,8 +174,8 @@ int emit_foo_flag(a) {
 		return puts("False");
 }\end{verbatimtab}
 	\end{sourcestyle}
-	\caption{A C function that does not have the difficulty described in Figure \ref{intro_portability_preproc.c}}
-	\label{intro_portability_preproc.p}
+	\caption{A C function that does not have the difficulty described in Figure \ref{example_portability_preproc.c}}
+	\label{example_portability_preproc.p}
 \end{figure}
 
 C's preprocessor carries much blame for our problems with binary portability.  In C, a library can declare macros that
@@ -183,10 +183,10 @@ get resolved when the calling module is compiled, and later, a new version of th
 these macros.  As Pit does not provide a preprocessor, this is not a problem.  A preprocessor can be applied to a
 source file if desired, as long as its affects are limited to that source file.  Usually, rather than using
 preprocessor macros, variables declared ``constant'' and function calls should be used instead.  For example, if the C
-header file fragment shown in Figure \ref{intro_portability_preproc.c} were in a system library, it would cause object
+header file fragment shown in Figure \ref{example_portability_preproc.c} were in a system library, it would cause object
 files compiled with it to be incompatible with any system that implements the contents of the macro differently (for
 example, by changing the 0x4 to a different value).  Changing the preprocessor macro to a function (Figure
-\ref{intro_portability_preproc.p}) prevents the compiler from resolving the dependency at compile-time in dependent
+\ref{example_portability_preproc.p}) prevents the compiler from resolving the dependency at compile-time in dependent
 modules; rather, the dependency is resolved at link-time, and linking is postponed until after the program is
 distributed.
 
@@ -204,7 +204,7 @@ there will be no adverse affect to portability.
 int fseeko(FILE *stream, off_t offset, int whence);\end{verbatimtab}
 	\end{sourcestyle}
 	\caption{This C function prototype is unportable after translation because the size of off\_t will vary between operating systems.}
-	\label{intro_portability_proto.c}
+	\label{example_portability_proto.c}
 \end{figure}
 
 \begin{figure}[htb]
@@ -218,13 +218,13 @@ public function(in auto $file, in auto $offset,
 		value, the system library throws an exception back to the caller.  \$whence is simply the letter b,
 		h, or e, meaning the offset is relative to the ``beginning'', ``here'', or ``end''.  This way, the
 		the C preprocessor macros SEEK\_SET, SEEK\_CUR, and SEEK\_END are unnecessary.}
-	\label{intro_portability_proto.p}
+	\label{example_portability_proto.p}
 \end{figure}
 
 The other problem is passing variables, which requires autos to solve.  If a parameter to a function is represented as
 an auto, it can be extended without recompiling existing code.  For example, rather than representing the offset into a
-file as a statically-sized integer as shown in Figure \ref{intro_portability_proto.c}, it is represented as an auto, as
-shown in Figure \ref{intro_portability_proto.p}.  Clearly, this solution will sometimes involve a cost to
+file as a statically-sized integer as shown in Figure \ref{example_portability_proto.c}, it is represented as an auto, as
+shown in Figure \ref{example_portability_proto.p}.  Clearly, this solution will sometimes involve a cost to
 efficiency.  This cost is not as severe as it seems at first, however, because not all values need to be passed in an
 extensible way.  For example, any value that represents something bounded by memory can be represented with a
 naturally-sized integer (that is, an integer whose size matches the hardware's pointer size).  As Pit guarantees that
@@ -250,7 +250,7 @@ unsatisfactory, because it requires the compilation to generate different assemb
 system has switched to a 128-bit off\_t or is still using a 64-bit off\_t.  However, simply compiling two
 versions is infeasible, because other data types are likely to be in transition as well, each of which doubles
 the number of compiled versions required.  A better solution is to abstract the type of a file offset out of the
-compiled code entirely (Figure \ref{intro_portability_proto.p}).  An auto can represent the integer without requiring a
+compiled code entirely (Figure \ref{example_portability_proto.p}).  An auto can represent the integer without requiring a
 particular size; the amount of memory allocated will always be sufficient to represent the number.
 
 While this reduces efficiently a little, file storage is one of probably very few commonly-used places that autos are
@@ -278,12 +278,12 @@ In short, while there is some cost to using autos to pass integers to libraries,
 where it is negligable in almost all cases.
 
 \begin{figure*}[htb]  % This figure is ugly because it's so darn big.
-	\sourceinput{intro_portability_network.c}
+	\sourceinput{example_portability_network.c}
 	\caption{A C program for connecting to the local system on port 22 and reading one packet.}
-	\label{intro_portability_network.c}
+	\label{example_portability_network.c}
 \end{figure*}
 \begin{figure}[htb]
-	\sourceinput{intro_portability_network.p}
+	\sourceinput{example_portability_network.p}
 	\caption{
 		An equivalent Pit program.  In Pit, the error handling may be omitted, as Pit uses exceptions for reporting unhandled
 		errors gracefully.  A hash is a robust and simple way to pass all the necessary parameters in one call.  Notice that
@@ -294,7 +294,7 @@ where it is negligable in almost all cases.
 		port and network numbers are always done by the library -- so there's no htons().  We don't need to initialize any
 		unused values because a hash keeps track of which values are initialized.
 	}
-	\label{intro_portability_network.p}
+	\label{example_portability_network.p}
 \end{figure}
 
 The final major difficulty with passing parameters to system library calls in an extensible way is the inflexiblity of
@@ -314,9 +314,9 @@ An excellent example where this is useful is the API for establishing a TCP netw
 system call requires the programmer to pass a struct containing the family (``AF\_INET''), port, and address.  Some
 operating systems also define a "length" field that others omit.  Also, most define additional padding in the struct
 that reserves space used for other protocols such as IPv6.  This space must be zeroed for portability.  (Figure
-\ref{intro_portability_network.c})  All this adds up to an interface that is easier to use wrong than to use right,
+\ref{example_portability_network.c})  All this adds up to an interface that is easier to use wrong than to use right,
 and is not at all portable after compilation.  This information is far better represented as a hash (Figure
-\ref{intro_portability_network.p}); this way, the system library can check for unspecified fields (rather than reading
+\ref{example_portability_network.p}); this way, the system library can check for unspecified fields (rather than reading
 uninitialized memory), and the system library can take an appropriate default action.  In the Pit example, both the
 local and remote IP address and port are passed in the same call.  If the local IP and port are omitted, the system
 library will simply ask the kernel to use default values.  With a hash, all the information about the hash is
