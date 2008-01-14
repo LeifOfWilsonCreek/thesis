@@ -3,7 +3,7 @@ import socket;
 
 public function(out int $exit_status) $.main = {
 	private auto $s;
-	$socket.connect($s, hash {
+	$socket.new($s, hash {
 		"family", "inet",
 		"type", "stream",
 		"laddress", "127.0.0.1",

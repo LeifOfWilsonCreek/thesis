@@ -2,37 +2,39 @@
 
 Pit is a general-purpose programming language designed to be an alternative to C with improvements that have a
 substantial positive impact on maintainability, security, and portability.  The main improvement is that memory
-management is \emph{optionally} automated.  In one function, some variables can be managed automatically and others can
-be managed manually.
+management is \emph{optionally} automated.  In a single function, some variables can be managed automatically and
+others can be managed manually.  Features of the language are designed to be powerful yet simple, unrepetitive, and
+symmetrical to reduce the complexity, although this is often a subjective judgement.  The language is also designed to
+be familiar to C programmers, although translating C code into maintainable Pit code will probably always be a manual
+task.  It should be significantly easier to write programs in Pit than in C because of the memory management features
+that are available.
 
-The goal is to create a language where the programmer can choose between allocating memory manually (the same as in C) by using
+The goal is to create a language where the programmer can choose between allocating memory manually (as he would in C) by using
 statically-typed ``\emph{primitive}'' variables or allowing the compiler to insert memory management code automatically
 by using dynamically-typed ``\emph{auto}'' variables.  This allows the programmer to choose between automatically
-ensuring that there are no buffer overrun\cite{alephone} or integer overflow\cite{ahmad2003} vulnerabilities in the code at the cost of efficiency and
-writing more efficient code at the cost of maintainability and more opportunities for bugs.  The innovation is that
+ensuring that there are no buffer overrun\cite{alephone} or integer overflow\cite{ahmad2003} vulnerabilities in the code, often at the cost of efficiency, and
+writing more efficient code, often at the cost of maintainability and more opportunities for bugs.  The innovation is that
 because the same language supports both, the programmer can choose to write code both ways in the same function, rather
 than choosing between one or the other for the entire module.
 
 The core language and primitive variables are similar to C, and the auto variables are similar in many respects to
-variables implemented by scripting languages such as Perl or Python.  Primitives are simply the classical variable
-types provided by C:  integer, float, string, struct, and function (including trivial variations such as characters,
-pointers, signed or unsigned integers, etc) with static sizes and identical semantics.  Autos are implemented
-syntactically as another type of variable; that is, rather than declaring a variable as ``integer'' or ``struct'', it is
-declared ``auto''.  Semantically, ``auto'' represents a meta-type, indicating that the type of the variable is dynamic
-and determined automatically during run-time by the value assigned to it.  Memory for autos is allocated and freed
-automatically.  The types that can be stored in an auto are integer, fraction, string (of homogeneous integers only), array
-(actually this is a string of autos), hash (instead of struct),
-and reference (instead of pointer).  (In Pit, we define ``strings'' as homogeneous sequences and ``arrays'' as
-heterogeneous sequences.  C sequences are herein referred to as strings, but this need not refer to a string of characters.)
-Automatic memory management includes the subvalues stored in an auto, such as elements in arrays and hashes,
-and referents of references.  The compiler implements autos by translating every operation on an auto into a function
+variables implemented by scripting languages such as Perl or Python.  Primitive variables are simply the classical variable
+types provided by C:  integer, float, array, struct, and function (including trivial variations such as characters,
+pointers, signed or unsigned integers, etc) with static sizes and identical semantics.  Auto variables are implemented
+syntactically as another type of variable; that is, rather than declaring a variable as ``integer'' or ``struct'', auto
+variables are declared ``auto''.  Semantically, ``auto'' represents a meta-type, indicating that the type of the
+variable is dynamic and determined automatically during run-time by the value assigned to it.  The built-in language
+libraries allocate and free memory for auto variables automatically.  The types that can be stored in an auto are integer,
+fraction, text string, array (a sequence of auto variables which may store elements of differing type), hash (instead of
+struct), and reference (instead of pointer).  Automatic memory management includes the subvalues stored in an auto,
+such as elements in arrays and hashes,
+and referents of references.  The compiler implements auto variables by translating every operation on them into a function
 call to a supporting library.  Pit is self-hosting, in the sense that eventually the compiler tools and
-supporting libraries for Pit will be written in Pit with no tools written in other languages.  This
-is possible because primitives can be used to construct the infrastructure required by autos.
+supporting libraries for Pit will be written in Pit with no tools written in other languages.  To accomodate this, we
+used primitive variables in the supporting library to construct the data structures that store information in auto variables.
 
 % XXX: This might be a good place to mention dynamic languages and reflective languages.  This should also be in Related Work.
 
 Pit is targeted at making low-level code more secure, portable, and maintainable.  It includes support for in-line
 assembly code to facilitate system programming, and it is well-suited for anything C is well-suited for, including
-kernels, the system library, supporting software, network daemons, etc.  However, the inclusion of autos drastically
-reduces the amount of code required for most programs.
+kernels, the system library, supporting software, network daemons, etc.
