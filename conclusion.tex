@@ -1,12 +1,18 @@
 \section{Conclusion}
 
 Currently, low-level code is almost exclusively written in C.  Pit is a much friendlier language for writing low-level
-code, and there is no penalty when the programmer chooses to use only primitive variables.  When the programmer chooses
+code, and it avoids infrastructure that usually deters programmers from choosing other languages for low-level code
+because of its high overhead or unpredictable behavior, such as an interpreter, a virtual machine, or a mark-and-sweep
+garbage collector.  There is no performance penalty to using Pit when the programmer chooses to use only primitive
+variables.  When the programmer chooses
 to use auto variables, there is a cost (we don't know how much yet), but this cost is mitigated in two ways.  First, a
-decent optimizer will eliminate a substantial amount of the overhead, and second, the programmer may choose to use
-primitive variables only where the benefit is worthwhile.  Because of the relation of Zipf's Law to execution time, the
+decent optimizer will eliminate a substantial amount of the overhead by replacing auto variables with primitive variables,
+and second, the programmer may choose to explicitly write the code using
+primitive variables and manual memory allocation where the benefit is worthwhile.  Because of the relation of Zipf's
+Law to execution time, the
 penalty will not be important in most of the code.  When efficiency is necessary, Pit provides an exceptionally easy
-way to interface auto variables with primitive variables.  When using auto variables, the code is completely protected
-from buffer overruns, integer overflow bugs, and other memory allocation bugs.  Object files generated from modules
-written in Pit are far easier to move between operating systems, as recompiling is usually not required.  These
-considerations make Pit a superior language to C for low-level programming.
+way to interface auto variables with primitive variables.  Perhaps the biggest advantage of Pit is the ability to
+describe time-critical sections in efficient terms while protecting the rest of the code from buffer overruns,
+integer overflow bugs, and other memory allocation bugs.  Object files generated from modules
+written in Pit are far easier to move between operating systems, because recompiling is usually not required.  These
+considerations make Pit a superior language for low-level programming.

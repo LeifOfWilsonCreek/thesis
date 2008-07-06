@@ -4,8 +4,8 @@ import socket;
 public function(out int $exit_status) $.main = {
 	private auto $s;
 	$socket.new($s, hash {
-		"family", "inet",
-		"type", "stream",
+		"network", "ip4",
+		"transport", "stream",
 		"laddress", "127.0.0.1",
 		"raddress", "127.0.0.1",
 		"rport", 22,
