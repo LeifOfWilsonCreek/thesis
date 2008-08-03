@@ -1,39 +1,78 @@
 \section{Introduction}
 
-Pit is a general-purpose programming language designed to be an alternative to C with improvements that have a
-substantial positive impact on maintainability, security, and portability.  The main improvement is that memory
-management is \emph{optionally} automated.  In a single function, some variables can be managed automatically and
-others can be managed manually.  Features of the language are designed to be powerful yet simple and
-symmetrical to reduce complexity.  The language is also designed to be familiar to C programmers, although the
-differences between the languages create enough differences in coding style that it will probably always be a manual
-task to translate between C code and Pit code in a way that produces reasonably understandable code.  It
-should be significantly easier to write programs in Pit than in C because of Pit's memory management features.
+% Discuss ``general-purpose'' and compare more abstract languages with less abstract.
+General-purpose programming languages, referring to languages designed for writing wide ranges of applications such as
+C, Perl, and their relatives, may be characterized by their style of memory management and level of abstraction.  As a
+general trend, less abstract languages require the programmer to explicitly code memory management logic and statements
+express CPU instructions more directly with greater detail, while more abstract languages require less attention to
+memory management and represent the intent of the program more directly with less detail.  There are, of course, many
+points of view on classifying languages, but for this discussion, the interesting trade-offs between general-purpose
+languages are manual or automatic memory management, representing CPU instructions directly or the intent of the
+algorithms, and representing more detail or less detail.  For example, C represents the CPU's instructions almost
+directly and provides no automated memory management and requires more detail in the code, however Perl manages memory
+entirely automatically and usually represents complex algorithms in less code.  The cost to using Perl is, of course,
+efficiency; in many cases, Perl code is so slow it cannot meet the user's requirements.  This pattern of trade-offs
+frequently applies to comparisons between a low-level and a high-level language.  This brief discussion may seem to
+imply a trade-off between automated memory management and expression of fine-grained detail, however even if this
+connection holds (and it may not) it does not exclude the possibility of creating a language that can express both
+sides of the trade-offs in adjacent statements.  This duality is precisely what Pit implemented.
 
-The goal is to create a language where the programmer can choose between allocating memory manually (as he would in C) by using
-statically-typed ``\emph{primitive}'' variables or allowing the compiler to insert memory management code automatically
-by using dynamically-typed ``\emph{auto}'' variables.  This allows the programmer to choose between automatically
-ensuring that there are no buffer overrun\cite{alephone} or integer overflow\cite{ahmad2003} vulnerabilities in the code, often at the cost of efficiency, and
-writing more efficient code, often at the cost of maintainability and more opportunities for bugs.  The innovation is that
-because the same language supports both, the programmer can choose to write code both ways in the same function, rather
-than choosing between one or the other for each module.
+% Compare more abstract software with less abstract software.
+Unfortunately, most software does not divide as neatly as most languages into ``low-level'' and ``high-level'' where,
+for example, low-level applications cannot afford the cost of automated memory management incurred by high-level
+languages and high-level applications cannot afford the cost of extra effort in development time incurred by low-level
+languages.  Most nontrivial software has some code that does not need to execute efficiently and therefore would
+benefit from a high-level language and some code that must execute quickly or for other reasons cannot afford the costs
+of a high-level language.  Graphical programs are an easy example of this; code that deals with individual pixels and
+polygons for rendering images and animations benefits significantly from optimizing at the level of individual CPU
+instructions, while code that directs larger user interface widgets such as window placement and buttons benefits far
+more from greater abstraction.
 
-The core language and primitive variables are similar to C, and the auto variables are similar in many respects to
-variables implemented by scripting languages such as Perl or Python.  Primitive variables are simply the classical variable
-types provided by C:  integer, float, array, struct, and function (including trivial variations such as characters,
-pointers, signed or unsigned integers, etc) with static sizes and identical semantics.  Auto variables are implemented
-syntactically as another type of variable; that is, rather than declaring a variable as ``integer'' or ``struct'', auto
-variables are declared ``auto''.  Semantically, ``auto'' indicates that the type of the
-variable is dynamic and determined automatically during run-time by the value assigned to it and that the memory for it
-is allocated automatically.  The language
-library allocates and frees memory for auto variables automatically.  The types that can be stored in an auto are integer,
-fraction, text string, array (a sequence of auto variables which may store elements of differing type), hash, and
-reference (instead of pointer).  The compiler implements auto variables by translating every operation on them into a function
-call to a supporting library.  Pit is self-hosting, meaning that eventually the compiler tools and
-supporting libraries for Pit will be written in Pit with no tools written in other languages.  To accomodate this, the supporting
-language library uses primitive variables to construct the data structures that store information for auto variables.
+% How can we bridge the gap?  Describe problems with two languages.
+It's possible to bridge this gap by using two languages to write a program, but this approach has disadvantages.  One
+problem is it's difficult for a module written in one language to access data stored in memory by a module written in a
+different language because most languages store data in memory quite differently from each other.  Perhaps more
+importantly, using two languages to implement the software creates an artificial boundary in the logic based on the
+capabilities of the two languages rather than based on a natural separation of concern that's convenient for the
+program's design.  A better solution is to use a language that allows both approaches and allows fine-grained control
+over when each approach is applied.  Pit uses variable declarations to determine which approach to use, which allows
+convenient yet detailed control.
 
-% XXX: This might be a good place to mention dynamic languages and reflective languages.  This should also be in Related Work.
+% How does this relate to the title of the paper?
+Automated memory management typically found in more abstract languages has benefits beyond saving significant amounts
+of work; they also allow improvements to both security and portability.  Automated memory management can entirely
+prevent some classes of security holes, such as buffer overrun\cite{alephone} or integer overflow\cite{ahmad2003} bugs,
+and dynamically typed variables can help portability by loosening the run-time bindings between functions written by
+different vendors.  These two benefits are the focus of this research.
 
-Pit is targeted at making low-level code more secure, portable, and maintainable.  It includes support for in-line
-assembly code to facilitate system programming, and it is well-suited for anything C is well-suited for, including
-kernels, the system library, supporting software, network daemons, etc.
+% What is Pit?
+Pit is a compiled language derived primarily from C.  While it is designed to be familiar to C programmers, the
+languages are difference enough in coding style that it will probably always be a manual task to translate between C
+code and Pit code in a way that produces reasonably understandable code.  The most important innovation is that it
+simultaneously supports the variable types found in C, which we call ``primitive variables'' and another class of
+variables we call ``auto variables''.  Auto variables are declared syntactically using the keyword ``auto'' in place of
+the type specification.  Auto variables are similar in many respects to variables implemented by Perl; in this regard,
+Pit is secondarily derived from Perl.  They are dynamically typed and manage memory automatically.  The programmer can
+choose to write the entire program using only auto variables, only primitive variables, or a combination of both.  This
+allows the programmer to choose to use automated or manual memory management with every variable declaration.  Thus,
+the programmer can write some code that has all the characteristics of C code by avoiding auto variables, and in the
+same function write more code that has all the benefits of automated memory management and dynamically typed variables
+by using auto variables.
+
+% How is it implemented?
+The compiler implements auto variables by inserting function calls to a supporting library.  Each operation translates
+into a function call, and it inserts additional calls for incrementing and decrementing reference counts for garbage
+collection.  It also transparently inserts calls to this library for converting from a primitive variable type to an
+auto variable or vice versa, making it easy to assign a value from a primitive variable to an auto variable and vice
+versa.  Pit is self-hosting, meaning that it can express the compiler tools and supporting libraries for itself with no
+tools written in other languages (although this isn't implemented yet).  To accomplish this, the supporting language
+library uses primitive variables to construct the data structures that store information for auto variables.
+
+% What is it good for?
+Pit is designed to be suitable for (but not limited to) low-level programming, such as for operating system kernels,
+device drivers, system libraries, etc.  This is perhaps the class of software that is most starved for improvements in
+languages because most implementations of recent languages require a virtual machine, prevent manual memory management,
+and don't have a way to access assembler code.  Pit can interact with C code reasonably easily, which makes
+transitioning or interacting with an existing project easier.  All C variables map directly to primitive variables in
+Pit, and the calling convention for functions is close enough that a simple wrapper function can work around the
+differences.
