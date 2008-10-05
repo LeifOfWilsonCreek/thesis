@@ -1,56 +1,96 @@
 \section{Related Work}
 
-There are many approaches to detecting security problems in C code, some during compile-time and some during run-time.
-Many of these approaches represent significant improvements.
+General concern over computer security is probably as old as wide-spread use of computers for routine tasks.  In 1972 James
+Anderson published a report for the Electronic Systems Division of the US Air Force\cite{1972anderson}.  The primary
+concerns of his report were security between users of time-sharing systems and security between computers on a network.
+For its age, his report is surprisingly relevant to modern computing.  Security between users is at least as relevant
+today as it was in 1972 (even if multiuser machinery has perhaps declined), because most operating systems use it to
+minimize the threat that applications pose to each other.  For example, a server running Apache and MySQL typically
+executes them with limited privileges as separate users so that if Apache is compromised, MySQL is still protected.
+The importance of security between computers has grown explosively as the Internet has grown, because nearly all
+computers are now connected to the Internet.  However, it wasn't until the 1990s that the industry widely acknowledged
+that the numerous subtle security flaws in software affect everyone, not just organizations with especially sensitive
+secrets such as the US Air Force.  Today, security is such a high priority that many users will accept severe
+performance penalties (especially in situations where faster hardware can compensate) or use software that is
+significantly inferior in other ways.  On the other hand, there is significant successful work on reducing the cost of
+security, where cost refers to every trade-off -- performance, maintainability, capabilities, hardware, etc.
 
-\begin{itemize}
-\item Non-Exec User Stack\cite{solardesigner}
-\item StackGuard\cite{cowan1998}
-\item ProPolice\cite{etoh2001,zhivich2005}
-\item Transparent Runtime Randomization\cite{xu2003}
-\item SmashGuard\cite{ozdog2003}
-\item PointGuard\cite{cowan2003}
-\item Libverify
-\item RAD
-\item Address Obfuscation\cite{bhatkar2003}
-\item SafeC\cite{li2004}
-\item CCured\cite{li2004,zhivich2005}
-\item Vault\cite{li2004}
-\item Cyclone\cite{li2004}
-\item Chaperon\cite{zhivich2005}
-\item Valgrind\cite{zhivich2005}
-\item CRED\cite{zhivich2005}
-\item Insure++\cite{zhivich2005}
-\item TinyCC\cite{zhivich2005}
-\end{itemize}
+Intense interest in security is still relatively new, and many common languages and programs predate wide-spread
+concerns about security.  It wasn't until 1988 that the first documented exploitation of a buffer overrun appeared in the form of the Morris
+Worm.  Interestingly, the report from Cornell on this incident\cite{1989eisenberg} mentions mutual trust between
+computer users up to this point, and a desire not to ``build walls as high as the sky'' to protect against intruders.
+In today's environment of persistent identity thieves, spammers, bot-nets, pirates, and costly hoaxes it seems
+strange to be so unconcerned with security.  Looking back, it seems obvious that the Morris Worm was a disaster waiting to happen,
+however at a time before online shopping and personal computers for everyone raised the stakes, it probably wasn't
+unreasonable to assume attackers could be tracked down and prosecuted the same way they are with physical security
+breaches.
 
-The methods above that do not require code modification can only detect an attack in progress and abort the program;
-they do not fix the underlying problem that there is a bug in the software.  Detection is a big improvement, and in
-most programs, this is a ``safe'' thing to do; although the program behaves in an undesirable way, disaster is averted.
-In many cases, however, aborting a program is very dangerous.  For example, a trapped buffer overrun bug in a kernel
-will still crash the computer, resulting in down-time and lost data.  A trapped bug in a database server can cause
-equally catastrophic results.  Worse, an attacker may still exploit any such bug to deliberately keep a service
-off-line.  While security is not compromised (meaning that sensitive data is not revealed and the attacker has gained
-no control over the program), the solution is still not good enough.  The real problem is that there is no way to
-actually fix the bug without modifying existing code.
+In 1996, the community's equilibrium was again punctuated by Aleph One.  This time, there was no turning back.  Computers
+had permeated the public to the point where too many people were interested in breaking security to ignore the issue
+any longer, and now Smashing The Stack For Fun And Profit\cite{1996alephone} detailed exactly how to take advantage of
+unchecked buffers with an explanation most novice hackers could understand.  This is roughly when intense work started
+in securing software against dedicated attackers and setting up ways of quickly responding as new security holes are
+discovered.  The pattern of the buffer overrun programming bug has been astonishingly pervasive and persistent.  In spite
+of 12 years of auditing since Aleph One threw open the gates, old buffer overrun bugs are still frequently discovered,
+and new ones are frequently introduced.  Simply learning to write bug-free code has proven to be no more effective at
+eliminating buffer overrun bugs than at eliminating bugs in general.
 
-Some solutions deal with buffer overruns in better ways, providing a means for a robust recovery or automatically
-allocating memory so there are no buffer overrun bugs.  These solutions require modification to the source code.  Most
-are designed with the intent that old code can be retrofitted with these changes, and thus stay as close as possible to
-C.  When ensuring security on an existing C program, this may be a good solution, as it is likely to be easier than
-rewriting the project in a completely new language.  However, these solutions do not protect against other types of
-bugs, and they do not improve the quality of the code.  Rather, they tend to obfuscate the code even further by adding
-hints or extra information for the compiler.
+Starting roughly 2002\cite{2002blexim,2003ahmad}, attackers started exploiting integer overflow bugs and soon other
+non-control-data attacks\cite{2005chen}.  Exploiting these bugs is a more subtle exercise and varies more between
+programs, but as it becomes harder for attackers to find buffer overrun bugs, they will undoubtedly focus more on other
+bugs.
 
-None of these solutions address non-control-data attacks\cite{chen2005} or integer overflow bugs.  Protecting against
-these is an issue concerned more with code correctness than simple type safety.  A language that provides abstraction
-for memory allocation will help prevent other memory-related bugs such as the double-free error and will reduce the
-number of unrelated bugs by simplifying the code and making bugs easier to notice.  Allocating memory automatically for
-integers will prevent integer overflow errors.  As better deterrents to buffer overrun attacks are developed, attackers
-will inevidably focus more on attacking these weaknesses.
+Many tools have been developed that focus on detecting buffer overrun bugs at run-time.  These can help developers fix
+old code and mitigate security risks, but none of the run-time tools can detect a bug without a test case that triggers
+it, and several types of errors are not reported by any of them, including integer overflow bugs and buffer overrun
+bugs within a data structure.  Dynamic Buffer Overflow Detection\cite{2005zhivich} surveys some tools in this category
+including Chaperon, Valgrind, CCured, CRED, Insure++, ProPolice, TinyCC, and StackGuard\cite{1998cowan}.
 
-Pit allows a new approach for new code.  It is not meant as a solution for fixing old code, but rather as a better
-language for writing new code.  Automatically translating a program from C into Pit in a way that takes advantage of
-Pit's new features is likely to be impossible.  However, when writing new code, Pit provides a clear advantage.  Autos
-provide guaranteed protection against memory and overflow bugs and simplify code substantially, yet when performance is
-more important than security, primitives are still available.
+Safe Systems Programming Languages\cite{2004li} surveys SafeC, CCured, Vault, and Cyclone.  Cyclone extends C to provide
+bounds-checking.  However, it requires extensive modifications to the code, incurs a significant performance penalty to
+take advantage of its benefits, and still aborts the program when a bug is detected rather than dealing with memory
+allocation automatically.  It also does not address integer overflow bugs.  This represents the disadvantages of
+automatic memory management with none of the benefits.  SafeC similarly protects against buffer overruns with run-time
+bounds checking, but sacrifices performance to avoid code modifications.  Vault is an entirely new language that does
+not support pointer arithmetic, which makes it unsuitable for kernel code.  It also suffers from the disadvantage of
+requiring the programmer to explicitly track memory allocations while restricting pointers so tightly that it could
+have automated memory management entirely.
+
+SmashGuard\cite{2003ozdog} presents a solution that is interesting because it is implemented in hardware so it requires
+no modification to application code and incurs no overhead.  Its disadvantages are it protects only against attacks that
+target function call return addresses, it requires minor kernel modifications, and of course, requires new hardware.
+
+Transparent Runtime Randomization\cite{2003xu} and Address Obfuscation\cite{2003bhatkar} change the memory layout of
+applications with each execution.  This is effective against most attacks because the attacker generally cannot predict
+the behavior of the program closely enough to compromise it.  However, this does not protect against non-control-data
+attacks or potential denial-of-service attacks because of program crashes.  PointGuard\cite{2003cowan} is a tool with a
+different approach but similar results.  Rather than rearranging the application's memory layout, it encrypts pointers
+when they are in memory so that a corrupted pointer will be decrypted to an unpredictable address before being
+accessed.
+
+The methods that detect an attack in progress and abort the program do not fix the underlying problem that there is a
+bug in the software.  Detection is a big improvement, and in most programs, this is a ``safe'' thing to do; although the
+program behaves in an undesirable way, disaster is averted.  In many cases, however, aborting a program is dangerous.
+For example, an abort in the kernel will crash the computer, resulting in down-time and often lost data.  A trapped bug
+in a database server can cause equally catastrophic results.  An attacker may exploit any such bug to deliberately keep
+a service off-line.  While sensitive data is not revealed, the solution is still not good enough.
+
+Vault and Cyclone extend C but make code more complicated, and more complication typically means more errors.  It is
+more desirable to simplify code through abstraction instead, and automated memory management is a powerful tool for
+this.  Automated memory management also addresses non-control-data attacks and integer overflows, which most of the above methods do
+not consider.  However, low-level developers have historically avoided languages that provide automated memory management
+because these languages also prevent access to raw pointers, in-line assembly, and necessary optimization techniques.
+(Automated memory allocation includes allocating and freeing memory without explicit statements.  It also includes
+extending buffers to avoid overruns and widening integers to avoid overflows.)
+
+This history suggests the following conclusions.  C was designed before security was a major concern, and unfortunately
+in several ways it is impossible to extend C in ways that would solve the problem once and for all without significant
+changes to all the code in need of protection.  The best way to solve memory allocation bugs is obviously to automate
+memory allocation, but before low-level developers can use automated memory allocation, there needs to be a language
+that supports both memory allocation and access to raw pointers.  Such a language not only fixes the allocation bugs but
+also simplifies much code.
+
+The primary disadvantage to creating a new language is that it requires rewriting code, but no solution has been
+presented yet that can fully protect a program without either unacceptable complexity, unacceptable cost to efficiency,
+or loss of access to raw pointers.  Full protection includes protecting buffers that are part of a struct, and by
+design, C allows an array contained in a struct to overflow, and many programs utilize that feature in reasonable ways.

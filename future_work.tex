@@ -1,23 +1,30 @@
 \section{Future Work}
 
-The first work to do next is to write a Pit compiler in Pit.  This will demonstrate that Pit can be self-hosting.
-Also, the current compiler has an overly simple design with no optimizations.  It was written for a single purpose,
-which is to compile the version rewritten in Pit.
+The first work to do next is to write a Pit compiler in Pit.  This will both demonstrate that Pit can be self-hosting
+and improve on the current compiler, which has an overly simple design with no optimizations.  It was written for a
+single purpose, which is to bootstrap the compiler written in Pit.
 
 Then the compiler needs some optimization.  Most of the optimization techniques used by C compilers should be useful in
-Pit.  There are additional Pit-specific optimizations, because a good compiler should find many places where a
-primitive variable can be substituted for an auto variable.  When this substitution is possible, the programmer gains
-all the benefits of auto variables with no performance penalty.  When work on optimization is complete, it is
-reasonable to expect Pit programs that use only primitive variables to match the speed of C programs.  Pit programs
-should always be faster than Perl programs because when a program written in Perl executes, Perl compiles it into
-bytecode, then executes it in a virtual machine.  Pit programs should execute significantly faster, even if they use no
-primitive variables, because the code is already compiled at run-time and does not require a virtual machine.
+Pit.  There are additional Pit-specific optimizations.  For example, a primitive variable can often be substituted for
+an auto variable as described above.  When work on optimization is complete, it is reasonable to expect Pit programs
+that use only primitive variables to match the speed of equivalent C programs.  Pit programs should always be faster
+than equivalent Perl programs because when a program written in Perl executes, Perl first compiles it into byte-code,
+then executes it in a virtual machine.  Pit programs should execute significantly faster, even if they only use auto
+variables, because the code is already compiled at run-time and does not require a virtual machine.  This places the
+performance of Pit programs, at worst, somewhere close to C programs and better than Perl programs.
 
-Next, there needs to be some study of the difference in speed between primitive and auto variables.  We need to find
-out how high the performance penalty is for using auto variables.  This will provide insight into when it's appropriate
+Next, there needs to be some study of the difference in speed between primitive and auto variables, specifically to
+determine how high the performance penalty is for using auto variables.  This will provide insight into when it's appropriate
 to use primitive or auto variables when weighing the trade-off of a program's performance versus its security,
-portability, and difficulty to write.
+portability, and difficulty to write.  Some rough study on this could be done today on toy examples by emulating
+the logic for auto variables in C.  The examples would be lengthy and inconvenient, but with care they could serve the
+purpose of giving a rough estimate of the difference in speed between the types of variables.
 
-Eventually, it may be useful to create a compiler that translates Pit code into a byte-code that is suitable for a
-virtual machine.  Like Java, this would allow programs to be portable between CPU architectures.  It should be possible
-to do this in a way that allows many programs to be compiled natively or for the virtual machine without modification.
+A later useful branch of work may be to create a compiler that translates Pit code into a byte-code that is suitable
+for a virtual machine.  Like Java, this would allow programs to be portable between CPU architectures.  It should be
+possible to do this in a way that allows many programs to be compiled natively or for the virtual machine without
+modification.
+
+Another possible branch of work may be adapting existing research on checking C code for security bugs.  While this is
+obviated for code that exclusively uses auto variables, this research may still be useful to minimize security risks in
+code that uses primitive variables.

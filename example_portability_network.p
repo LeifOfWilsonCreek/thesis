@@ -15,5 +15,5 @@ public function(out int $exit_status) $.main = {
 	$s=>readline($buf);
 	$io.stdout=>write($buf);
 
-	return 0;
+	$exit_status = 0;
 }

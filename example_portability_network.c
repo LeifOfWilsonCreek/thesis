@@ -17,9 +17,9 @@ int main() {
 	 * and connect().  Notice the very important, but easily forgotten call to
 	 * memset().  This is required because implementations may add optional fields,
 	 * and we must pass zero for these, not an uninitialized value. */
-//	memset(&my_addr, 0, sizeof(my_addr));
-//	my_addr.sin_family = AF_INET;
-//	my_addr.sin_addr.s_addr = inet_addr("127.0.0.1");
+	memset(&my_addr, 0, sizeof(my_addr));
+	my_addr.sin_family = AF_INET;
+	my_addr.sin_addr.s_addr = inet_addr("127.0.0.1");
 
 	memset(&their_addr, 0, sizeof(their_addr));
 	their_addr.sin_family = AF_INET;
@@ -31,11 +31,11 @@ int main() {
 		perror("socket");
 		return 1;
 	}
-//	if(bind(sockfd, (struct sockaddr *)&my_addr, sizeof(my_addr))) {
-//		perror("bind");
-//		close(sockfd);
-//		return 1;
-//	}
+	if(bind(sockfd, (struct sockaddr *)&my_addr, sizeof(my_addr))) {
+		perror("bind");
+		close(sockfd);
+		return 1;
+	}
 	if(connect(sockfd, (struct sockaddr *)&their_addr, sizeof(struct sockaddr))) {
 		perror("connect");
 		close(sockfd);

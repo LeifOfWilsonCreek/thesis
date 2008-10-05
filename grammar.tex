@@ -1,0 +1,346 @@
+\section{Appendix:  Grammar}
+
+\subsection{Convention}
+
+This specification uses BNF, Perl Compatible Regular Expressions (PCRE), and several trivial augmentations to BNF as
+follows:
+
+\begin{itemize}
+\item \verb_<>_ surrounds rule names.  When empty, represents the null rule.
+\item \verb_""_ means literal
+\item \verb_[]_ means optional (0 or 1 occurrence)
+\item \verb_()_ means grouping
+\item \verb_*_ means 0 or more occurrences
+\item \verb_+_ means 1 or more occurrences
+\item \verb_//_ means comment
+\end{itemize}
+
+\subsection{Token separation}
+
+The compiler uses PCREs to tokenize the input file.  The first capture buffer (\$1) captures a token, and the second
+(\$2) captures white-space.  If the expression doesn't match, the compiler tries the next expression.  If all fail, the
+compiler reports a syntax error and aborts.  If an expression captures only white-space, matching restarts after the
+white-space with the first regular expression.  If an expression captures only a token, it passes the token to the
+parser, then again restarts matching after the token with the first regular expression.  No regular expression matches
+both a token and white-space.  (These are copied directly from the compiler's source code, with syntactical decoration
+removed.  Assume the s flag to anchor \verb_^_ only at the beginning of a string containing newlines.)
+
+\begin{sourcestyle}
+\begin{verbatimtab}[\sourcetabsize]
+// Single-quoted strings
+^('[^']*')()
+
+// Double-quoted strings may contain \"
+^("(?:\\.|[^\\"])*")()
+
+// Single-line comments (treated like white-space)
+^()(//[^\n]*)
+
+// Multi-line comments (treated like white-space)
+^()(/\*.*?\*/)
+
+// White-space
+^()([ \t\r\n]+)
+
+// Bare-words and numbers
+^([A-Za-z0-9\.\_]+)()
+
+// Single special character tokens
+^([\(\)\[\]\{\}\,\@\#\$\;])()
+
+// Multi special character tokens
+^([\`\~\!\%\^\&\*\-\=\+\\\|\:\<\>\/\?]+)()
+\end{verbatimtab}
+\end{sourcestyle}
+
+The above identifies boundaries between tokens, but doesn't identify any meaning for the tokens.  First, consider
+individual tokens.  Here the specification again uses PCREs for conciseness, but after this section it is restricted to
+BNF.
+
+\begin{sourcestyle}
+\begin{verbatimtab}[\sourcetabsize]
+<number> ::= <integer> | <float>
+
+<integer> ::= ^[0-9]+$
+| ^[A-Z0-9]_[A-Z0-9]+$
+
+<float> ::= ^([1-9A-Z]_)?[0-9A-Z]+
+  (\.[0-9A-Z]+)?(e[0-9A-Z]+)?$
+
+\end{verbatimtab}
+\end{sourcestyle}
+
+Note that the rules above allow a preceding digit and underscore.  This is the notation for expressing a base besides
+decimal.  Any base between 2 and 36 is acceptable.  The base is identified by placing the highest digit for that base
+before the underscore.  Here are some examples of \verb_<number>_:
+
+\begin{itemize}
+\item A decimal integer:  3735928559
+\item Another decimal notation:  9\_3735928559
+\item Binary for 3735928559:  1\_11011110101011011011111011101111
+\item Hexadecimal for 3735928559:  F\_DEADBEEF
+\item Base-36 for 3735928559:  Z\_1PS9WXB
+\item A decimal float:  32.5
+\item Another decimal notation:  9\_32.5
+\item Binary for 32.5:  1\_100000.1
+\item Hexadecimal equivalent to 32.5:  F\_20.8
+\item Base-36 equivalent to 32.5:  Z\_W.I
+\end{itemize}
+
+\begin{sourcestyle}
+\begin{verbatimtab}[\sourcetabsize]
+<quoted-string> ::= ^'[^']*'$
+| ^"(\\.|[^\\"])*"$
+\end{verbatimtab}
+\end{sourcestyle}
+
+Single-quotes do not allow special encodings, so it is simpler to use them for strings with literal back-slashes, but
+it is impossible express single-quotes within a string identified by single-quotes.  Double-quotes allow back-slash
+encodings such as \verb_\" \\ \n_ etc.  Encoding is the only difference between the quoting types.  The compiler is
+8-bit clean, so a UTF-8 string may appear in quotes with no special support.
+
+\begin{sourcestyle}
+\begin{verbatimtab}[\sourcetabsize]
+<bare-word> ::= ^[A-Za-z0-9_.]+$
+
+<symbol> ::= "$" <bare-word>
+\end{verbatimtab}
+\end{sourcestyle}
+
+\verb_<symbol>_ is any entry in the symbol table (any variable or function) defined by source code.  Note that the
+leading \$ obviates the need for reserved symbol names.  Language keywords and numbers such as 32, F\_20, if, and asm
+are distinct from variables and functions named \$32, \$F\_20, \$if, and \$asm.  This allows future versions of the
+language to include new keywords without breaking old code, which is a problem that C suffers from frequently.  While
+this means there are no reserved symbol names, names should not begin with an underline because these may be used
+internally by the compiler tools.  For example, the symbol ``\_GLOBAL\_OFFSET\_TABLE\_'' is used on many platforms for
+dynamic linking.
+
+\begin{sourcestyle}
+\begin{verbatimtab}[\sourcetabsize]
+<type-def> ::= "@" <bare-word>
+\end{verbatimtab}
+\end{sourcestyle}
+
+\verb_<type-def>_ is any name defined by source code to refer to a particular data type.  Terminologically, a
+\verb_<symbol>_ has an associated \verb_<type-expression>_ (which can be a \verb_<type-def>_), and a \verb_<type-def>_
+is a short-hand name for a \verb_<type-expression>_.  Admittedly, both are tracked in the compiler's symbol table, so
+this specification can be somewhat confusing distinction if unexplained.  \verb_<symbol>_s are variables and functions.
+\verb_<type-def>_s are user-defined types for \verb_<symbol>_s.  As with symbols, names beginning with an underline
+should be avoided.
+
+\begin{sourcestyle}
+\begin{verbatimtab}[\sourcetabsize]
+<jump-label> ::= "#" <bare-word>
+\end{verbatimtab}
+\end{sourcestyle}
+
+A jump-label is any name defined by source code to refer to an entry point for execution.  These are used for exception
+handling and for arbitrary jumps.  (Pit uses the keyword ``jump'' instead of ``goto'' for consistency with assembly
+language.)  The scope of a jump-label is limited to the function it is defined in.  These use \# instead of \$.  These
+labels may be used in expressions to represent a memory address of executable code, which is useful for in-line
+assembly code.  Again, names beginning with an underline should be avoided.  The compiler will almost always need to
+define jump labels for flow control constructs; these are always named with an underline prefix so they don't conflict
+with user-defined jump-labels.  Unlike GCC, user-defined jump-labels are not renamed because in-line assembler code may
+need to reference them.
+
+\subsection{Modules and statements}
+
+\begin{sourcestyle}
+\begin{verbatimtab}[\sourcetabsize]
+<module> ::= <import-statement>* <statement>*
+\end{verbatimtab}
+\end{sourcestyle}
+
+An entire source file is a \verb_<module>_.  \verb_<import-statement>_s must come before other \verb_<statement>_s.
+
+\begin{sourcestyle}
+\begin{verbatimtab}[\sourcetabsize]
+<import-statement> ::= "import" <bare-word> ";"
+\end{verbatimtab}
+\end{sourcestyle}
+
+\verb_<import-statement>_s simply reference other libraries.  Dots in library names form a hierarchical naming
+convention corresponding to namespaces and subdirectories in the library search path.
+
+\begin{sourcestyle}
+\begin{verbatimtab}[\sourcetabsize]
+<statement> ::= <namespace-statement>
+| <asm-statement>
+| <conditional-statement>
+| <loop-statement>
+| <exception-statement>
+| <declaration-statement>
+| <expression> ";"
+| "return" ";"
+
+<statement-block> ::= <statement>
+| "{" <statement>* "}"
+
+<namespace-statement> ::= "namespace" ":" <statement-block>
+| "namespace" <bare-word> ":" <statement-block>
+\end{verbatimtab}
+\end{sourcestyle}
+
+A namespace may be anonymous (without a name).  Anonymous namespaces have little effect except that the private symbols
+in them may only be accessed by other symbols within the anonymous namespace.  Visibility of public symbols is
+unaffected by an anonymous namespace.  A named namespace has the same effect on private symbols, plus the effect that
+contained public symbols are all prefixed with the name of the namespace and a dot.
+
+\verb_<asm-statement>_ isn't defined yet.  It will represent syntax for specifying in-line assembler code.
+
+\begin{sourcestyle}
+\begin{verbatimtab}[\sourcetabsize]
+<conditional-statement> ::= ("if" | "unless") "("
+  <expression> ")" <statement-block> ["else"
+  <statement-block>]
+
+<loop-statement> ::= "loop" [<bare-word>] ":"
+  <statement-block> ["iterate" <statement-block>]
+| "again" ";"
+| "next" ";"
+| "break" ";"
+
+<exception-statement> ::= "try" "#" <bare-word>
+  <statement-block>
+| "throw" <expression> ";"
+| "label" "#" <bare-word> ";"
+| "jump" <expression> ";"
+
+<declaration-statement> ::=
+  <visibility> <type-expression> <type-def> ";"
+| <visibility> <type-expression> <symbol> ";"
+| <visibility> <type-expression> <symbol> "prototype" ";"
+| <visibility> <type-expression> <symbol> "alias" "=" "$"
+  <bare-word> ";"
+| <visibility> <type-expression> <symbol> "=" <initializer>
+
+<visibility> ::= "public"
+| "private"
+\end{verbatimtab}
+\end{sourcestyle}
+
+\verb_<declaration-statement>_s define both variables and functions.  Functions are declared using initializer syntax,
+since functions are just constant symbols that contain executable code.  Functions are generally a bit of an enigma to
+syntax, although they are less so in Pit than in most other languages.  For example, the sizeof operator does not know
+how to figure out their size; they are always constant data; the function initializer can only be used in a
+declaration-statement, not in an generic expression; etc.
+
+\subsection{Type-expressions}
+
+\begin{sourcestyle}
+\begin{verbatimtab}[\sourcetabsize]
+<type-expression> ::= <type-expression-bracket>
+| <type-expression-bare>
+
+<type-expression-bracket> ::= "[" <type-expression-bare> "]"
+
+<type-expression-bare> ::= <type-qualifier>*
+  <type-expression2> <type-expression3>
+
+<type-qualifier> ::= "signed"
+| "unsigned"
+| "const"
+| "unconst"
+| "volatile"
+| "unvolatile"
+| "stateless"
+| "unstateless"
+
+<type-expression2> ::= "auto"
+| "char"
+| "int" ["(" <integer> ")"]
+| "ptr" ["(" <type-expression> ")"]
+| "float" ["(" <integer> ")"]
+| "string" "(" <type-expression> ["," <integer>] ")"
+| "struct" "(" (<type-expression> <quoted-string> ",")+ ")"
+| "function" "(" (("in" | "out" | "inout") <type-expression>
+  "$" <bare-word> ",")* ")"
+| "@" <bare-word>  // user-defined type
+| "$" <bare-word>  // type of another symbol
+
+<type-expression3> ::= <>
+| "->" <type-expression3>
+| "<-" <type-expression3>
+| "(" ")" <type-expression3>
+| "(" <quoted-string> ")" <type-expression3>
+| "(" <symbol> ")" <type-expression3>
+\end{verbatimtab}
+\end{sourcestyle}
+
+Type-expressions are used for declaring and prototyping symbols, type-casting, within other type-expressions, and the
+sizeof operator.  Note that two of the alternatives in \verb_<type-expression3>_ allow referencing the type of an
+element in a struct or a parameter to a function.  Square brackets are used exclusively to identify a type-expression.
+For example, a type-cast converting \$foo to a 128-bit integer would look like this:
+
+\begin{sourcestyle}
+\begin{verbatimtab}[\sourcetabsize]
+$foo[int(128)]
+\end{verbatimtab}
+\end{sourcestyle}
+
+In certain cases where the syntax requires a type-expression, the square brackets are required
+(\verb_<type-expression-bracket>_ is used for these).  Specifically, they are required by type-casts and the sizeof
+operator; they are not required by declaring/prototyping symbols or within other type-expressions.
+
+\subsection{Expressions}
+
+\begin{sourcestyle}
+\begin{verbatimtab}[\sourcetabsize]
+<expression> ::= <value> [<binary-op> <expression>]
+
+<value> ::= <unary-op> <value>
+| <value> <postfix-unary-op>
+| "sizeof" <type-expression-bracket>
+| "(" <expression> ")"
+| "(" "if" <expression> "then" <expression> "else"
+  <expression> ")"
+| <symbol>
+| "error_id"
+| "line_number"
+| <number>
+| <quoted-string>
+| <jump-label>
+| ["array" | "hash"] "{" (<immediate> ";")* "}"
+
+<unary-op> ::= "-" | "~" | "not"
+
+<binary-op> ::= "=" | "+=" | "-=" | "*=" | "/=" | "/-="
+| "/+=" | "/<=" | "/>=" | "%=" | "|=" | "~|=" | "^=" | "~^="
+| "&=" | "~&=" | "<<=" | ">>=" | ":" | "+:" | "-:" | "*:"
+| "/:" | "/-: | "/+:" | "/<:" | "/>:" | "%:" | "|:" | "~|:"
+| "^:" | "~^:" | "&:" | "~&:" | "<<:" | ">>:" | "or" | "nor"
+| "xor" | "nxor" | "and" | "nand" | "<" | "<=" | "==" | "!="
+| ">=" | ">" | "<=>" | "min" | "max" | "+" | "-" | "*" | "/"
+| "/-" | "/+" | "/<" | "/>" | "%" | "|" | "~|" | "^" | "~^"
+| "&" | "~&" | "<<" | ">>"
+
+<postfix-unary-op> ::= "->"    // dereference operator
+| "<-"                         // reference operator
+| <type-expression-bracket>    // typecast
+| "(" <expression> ")"         // element of a string
+| "(" <quoted-string> ")"      // element of a for struct
+| "(" (<expression> ",")* ")"  // function call
+\end{verbatimtab}
+\end{sourcestyle}
+
+\subsection{Notes}
+
+The grammar is mostly presented in an order that minimizes the number of unexplained rules at each point as read from
+top to bottom.  For example, before defining \verb_<expression>_ and referencing many new undefined rules, the grammar
+ties off all the other loose ends.
+
+One minor but intriguing invention is the syntax for numbers in bases besides decimal.  This allows easy representation
+of any base up to 36, and avoids the confusion caused by the common convention of using a leading zero to designate
+octal.
+
+At the moment, for-loop syntax is not included.  There is some debate over the best syntax for this.  Rather than
+regretting a bad decision later, this matter is unfinished for the time being.  Meanwhile, the \verb_<loop-statement>_
+syntax allows a clause called ``iterate'' that mostly covers what for-loops can do.
+
+As presented, the grammar appears to support function declarations within functions, however the compiler does not
+implement this.  Also, there are restrictions as to which alternatives for \verb_<statement>_ are allowed inside a
+function and which are allowed outside a function.  This reflects how the proof-of-concept compiler is implemented;
+code generation, not parsing, enforces these restrictions.
+
+Some details in this grammar still need attention, however there is a functioning compiler that translates the grammar
+as presented here into i386 assembly language with support for auto variables.

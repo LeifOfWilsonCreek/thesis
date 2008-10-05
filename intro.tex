@@ -41,7 +41,7 @@ convenient yet detailed control.
 % How does this relate to the title of the paper?
 Automated memory management typically found in more abstract languages has benefits beyond saving significant amounts
 of work; they also allow improvements to both security and portability.  Automated memory management can entirely
-prevent some classes of security holes, such as buffer overrun\cite{alephone} or integer overflow\cite{ahmad2003} bugs,
+prevent some classes of security holes, such as buffer overrun\cite{1996alephone} or integer overflow\cite{2002blexim,2003ahmad} bugs,
 and dynamically typed variables can help portability by loosening the run-time bindings between functions written by
 different vendors.  These two benefits are the focus of this research.
 
@@ -49,8 +49,8 @@ different vendors.  These two benefits are the focus of this research.
 Pit is a compiled language derived primarily from C.  While it is designed to be familiar to C programmers, the
 languages are difference enough in coding style that it will probably always be a manual task to translate between C
 code and Pit code in a way that produces reasonably understandable code.  The most important innovation is that it
-simultaneously supports the variable types found in C, which we call ``primitive variables'' and another class of
-variables we call ``auto variables''.  Auto variables are declared syntactically using the keyword ``auto'' in place of
+simultaneously supports the variable types found in C, called ``primitive variables'' and another class of
+variables called ``auto variables''.  Auto variables are declared syntactically using the keyword ``auto'' in place of
 the type specification.  Auto variables are similar in many respects to variables implemented by Perl; in this regard,
 Pit is secondarily derived from Perl.  They are dynamically typed and manage memory automatically.  The programmer can
 choose to write the entire program using only auto variables, only primitive variables, or a combination of both.  This
